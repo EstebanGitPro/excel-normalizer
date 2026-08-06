@@ -1,0 +1,43 @@
+name: Build Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build jar (resolves Windows JavaFX natives)
+        run: mvn -B clean package -DskipTests
+
+      - name: Build .msi with jpackage
+        run: >
+          jpackage
+          --type msi
+          --name "Excel Normalizer"
+          --app-version 0.1.0
+          --vendor "Excel Normalizer"
+          --input target
+          --main-jar excel-normalizer-0.1.0.jar
+          --main-class com.excelnormalizer.ui.Launcher
+          --java-options "--enable-native-access=ALL-UNNAMED"
+          --win-menu
+          --win-shortcut
+          --win-per-user-install
+          --dest dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: excel-normalizer-windows-installer
+          path: dist/*.msi

@@ -1,0 +1,21 @@
+# Client accounting data — NEVER commit (personal IDs, names, balances)
+*.xlsx
+*.xls
+~$*
+
+# Build output
+target/
+dist/
+dependency-reduced-pom.xml
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Local tooling metadata
+.atl/
+.claude/
