@@ -19,3 +19,4 @@ dependency-reduced-pom.xml
 # Local tooling metadata
 .atl/
 .claude/
+.DS_Store

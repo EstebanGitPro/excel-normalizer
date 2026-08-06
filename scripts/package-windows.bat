@@ -17,6 +17,7 @@ jpackage ^
   --main-jar excel-normalizer-0.1.0.jar ^
   --main-class com.excelnormalizer.ui.Launcher ^
   --java-options "--enable-native-access=ALL-UNNAMED" ^
+  --icon assets\icon\icon.ico ^
   --win-menu ^
   --win-shortcut ^
   --win-per-user-install ^
