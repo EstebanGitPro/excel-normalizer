@@ -1,7 +1,7 @@
 # Hoja TD: tabla dinámica nativa sobre AUXILIAR
 
 *   **Author:** EstebanGitPro
-*   **Status:** Implemented (pending Windows check)
+*   **Status:** Implemented
 *   **Date:** 2026-11-12
 
 --------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ El export real `frm_con_Movimiento_Contabilidad.xlsx` (también fuera del repo) 
 
 Las cuatro se responden con el spike (paso 0 del plan), en Excel de escritorio en Windows, usando el export real de 4.577 filas.
 
-**Resultado del spike en Excel para Mac (2026-11-12):** la TD abrió con valores correctos, meses ordenados y filas ordenadas, con la variante 3 de OQ1 y el plan B de OQ4 (un ítem por campo). La implementación usa esa configuración. Queda confirmar OQ4 (sin aviso de reparación) y la Vista protegida en Windows con el `.msi`.
+**Resultado del spike en Excel para Mac (2026-11-12):** la TD abrió con valores correctos, meses ordenados y filas ordenadas, con la variante 3 de OQ1 y el plan B de OQ4 (un ítem por campo). La implementación usa esa configuración. Confirmado en Windows por el autor (2026-11-12): la TD funciona.
 
 *   **OQ1:** ¿la TD sale bien al abrir? Se prueban tres variantes y se queda la más barata que funcione:
     1.  sin hacer nada con las fórmulas;
