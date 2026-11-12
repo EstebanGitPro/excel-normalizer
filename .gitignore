@@ -20,3 +20,8 @@ dependency-reduced-pom.xml
 .atl/
 .claude/
 .DS_Store
+
+# Archify diagram build artifacts (candidates, receipts, recovery state)
+.archify/
+docs/diagramas/*.json
+docs/diagramas/.archify-remove-*/

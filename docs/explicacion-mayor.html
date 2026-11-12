@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoja MAYOR</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --surface: #ffffff; --ink: #1d1d1f; --muted: #5f6368;
+    --line: #e4e1da; --accent: #0070c0; --red: #c62828; --blue: #0070c0; --code-bg: #f3f1ec;
+    --hl: #fff4d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16171a; --surface: #1e2024; --ink: #ececec; --muted: #a3a7ad;
+      --line: #33363c; --accent: #5aa9e6; --red: #ff6b6b; --blue: #5aa9e6; --code-bg: #26292e;
+      --hl: #3a3420;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16171a; --surface: #1e2024; --ink: #ececec; --muted: #a3a7ad;
+    --line: #33363c; --accent: #5aa9e6; --red: #ff6b6b; --blue: #5aa9e6; --code-bg: #26292e;
+    --hl: #3a3420;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 1.4rem; margin: 48px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  code, pre { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 0.88em; }
+  :not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+  .note { background: var(--hl); border-left: 4px solid #e0a800; padding: 12px 16px; border-radius: 6px; margin: 16px 0; }
+  .kid { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 20px 16px; }
+  .red { color: var(--red); font-weight: 700; }
+  .blue { color: var(--blue); font-weight: 700; }
+  .bold { font-weight: 700; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 16px 0 0; font-size: 0.95rem; }
+  nav a, a { color: var(--accent); }
+  .diagram { width: 100%; height: 760px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: var(--surface); }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+  th { background: var(--code-bg); }
+  td.ln { white-space: nowrap; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+  td.code { white-space: pre; font-family: ui-monospace, Menlo, monospace; font-size: 0.84rem; }
+  .sheet td { text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 0.84rem; }
+  .sheet th { text-align: center; }
+  .sheet .r td:not(:first-child) { color: var(--red); font-weight: 700; }
+  .sheet .b td:not(:first-child) { color: var(--blue); font-weight: 700; }
+  .sheet .k td:not(:first-child) { font-weight: 700; }
+  .theme-toggle { float: right; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <button class="theme-toggle" id="themeToggle" type="button">Tema</button>
+  <h1>Cómo se arma la hoja MAYOR</h1>
+  <p class="lead">Explicación de <code>MayorSheet.java</code>: títulos, datos con colores por nivel y filas de control. Qué hace cada línea, de dónde vienen los datos y a dónde van. Es la hermana de la <a href="explicacion-saldo-tercero.html">explicación de SALDO TERCERO</a>.</p>
+  <nav>
+    <a href="#nino">1. Como si fueras un niño</a>
+    <a href="#diagrama">2. Diagrama</a>
+    <a href="#mapa">3. Mapa de la hoja</a>
+    <a href="#write">4. write()</a>
+    <a href="#titulos">5. Títulos</a>
+    <a href="#datos">6. writeData()</a>
+    <a href="#formulas">7. Fórmulas</a>
+    <a href="#colores">8. Colores por nivel</a>
+    <a href="#control">9. Filas de control</a>
+    <a href="#ejemplo">10. Ejemplo</a>
+  </nav>
+
+  <h2 id="nino">1. Como si fueras un niño</h2>
+  <div class="kid">
+    <p>Otra vez pasamos un <strong>cuaderno viejo</strong> (el Libro Mayor que exporta el sistema) a un <strong>cuaderno nuevo</strong>. Pero esta vez el cuaderno tiene <strong>tapa</strong> y <strong>contratapa</strong>:</p>
+    <ol>
+      <li><strong>La tapa (filas 1 a 4):</strong> arriba de todo escribís el nombre de la empresa, el NIT, el nombre del reporte y las fechas.</li>
+      <li><strong>Las páginas (fila 5 en adelante):</strong> copiás renglón por renglón. Acá el marcador no se elige por el NIT, se elige <strong>contando los números del código de cuenta</strong>:
+        <ul>
+          <li>1 o 2 números (<code>1</code>, <code>11</code>): es un título grande → <span class="red">rojo</span>.</li>
+          <li>4 números (<code>1105</code>): es una cuenta → <span class="blue">azul</span>.</li>
+          <li>6 números (<code>110505</code>): es una subcuenta → <span class="bold">negro grueso</span>.</li>
+          <li>8 números o cualquier otra cantidad: es el detalle → negro normal.</li>
+        </ul>
+        Es como un libro con capítulos, secciones y párrafos: cuanto más corto el código, más "importante" es la línea y más llamativo el color.
+      </li>
+      <li><strong>La contratapa (al final):</strong> hacés 4 cuentas de control, como cuando revisás que una suma "cierre": PYG, PATRIMONIO, EC CONTABLE y PARTIDA DOBLE.</li>
+    </ol>
+    <p>Igual que en SALDO TERCERO, la regla de oro es: <strong>primero elegís el marcador, después escribís el renglón completo</strong>, incluidas las 4 cajitas del principio (LARGO, N1, N2, N3).</p>
+  </div>
+
+  <h2 id="diagrama">2. Diagrama del flujo</h2>
+  <p>Si no se ve, abrí <a href="diagramas/mayor-flujo.html">el diagrama en otra pestaña</a>.</p>
+  <iframe class="diagram" src="diagramas/mayor-flujo.html" title="Diagrama del flujo de MAYOR"></iframe>
+
+  <h2 id="mapa">3. Mapa de la hoja que se genera</h2>
+  <p>Conviene tener esto a la vista mientras leés el código. Las columnas copiadas arrancan en la <strong>E</strong> porque adelante hay <strong>4</strong> columnas derivadas.</p>
+  <div class="table-wrap"><table class="sheet">
+    <tr><th>Fila Excel</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th></tr>
+    <tr><td>1–4</td><td colspan="4"></td><td colspan="6">Títulos combinados de E a J: empresa · NIT · reporte · fechas</td></tr>
+    <tr><td>5</td><td>LARGO</td><td>N1</td><td>N2</td><td>N3</td><td>CODCTA</td><td>Tnomcta</td><td>ANTERIOR</td><td>DEBITOS</td><td>CREDITOS</td><td>SALDO_FINAL</td></tr>
+    <tr><td>6…</td><td>=LEN(E6)</td><td>=LEFT(E6,1)</td><td>=LEFT(E6,2)</td><td>=LEFT(E6,4)</td><td colspan="6">datos copiados del Libro Mayor</td></tr>
+    <tr><td>última + 3</td><td colspan="8"></td><td>PYG</td><td>fórmula</td></tr>
+    <tr><td>…</td><td colspan="8"></td><td>PATRIMONIO</td><td>fórmula</td></tr>
+    <tr><td>…</td><td colspan="8"></td><td>EC CONTABLE</td><td>fórmula</td></tr>
+    <tr><td>…</td><td colspan="8"></td><td>PARTIDA DOBLE</td><td>fórmula</td></tr>
+  </table></div>
+
+  <h2 id="write">4. <code>write(...)</code>: el director de orquesta (líneas 40–55)</h2>
+  <p><strong>¿Quién lo llama?</strong> <code>NormalizationService.java:82</code>. Es la <strong>primera</strong> hoja que se crea, por eso MAYOR queda primera en el archivo.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">41</td><td class="code">Map&lt;String, Integer&gt; headerIndex =
+    Cells.headerIndex(sourceSheet);</td>
+      <td>Diccionario <em>nombre de columna → número</em>, leído de la fila 1 del Libro Mayor. Es igual que en SALDO TERCERO.<br><b>Va a:</b> los tres métodos de abajo.</td></tr>
+    <tr><td class="ln">42–48</td><td class="code">List&lt;String&gt; missing = ...
+if (!missing.isEmpty()) throw ...</td>
+      <td>Si falta alguna de las 6 columnas de <code>COLUMNS_TO_KEEP</code> (línea 23), corta con error.</td></tr>
+    <tr><td class="ln">50</td><td class="code">Sheet sheet = workbook.createSheet("MAYOR");</td>
+      <td>Crea la pestaña.</td></tr>
+    <tr><td class="ln">51</td><td class="code">writeTitleRows(sheet, sourceSheet, headerIndex);</td>
+      <td><strong>Paso 1:</strong> la tapa, filas 1 a 4. Ver sección 5.</td></tr>
+    <tr><td class="ln">52</td><td class="code">writeData(sheet, sourceSheet, headerIndex);</td>
+      <td><strong>Paso 2:</strong> encabezado y datos con color. Ver sección 6.</td></tr>
+    <tr><td class="ln">53</td><td class="code">writeControlRows(sheet);</td>
+      <td><strong>Paso 3:</strong> la contratapa. Ver sección 9. Fijate que solo recibe <code>sheet</code> (la hoja <em>nueva</em>): trabaja sobre lo que ya se escribió, no sobre el Excel de origen.</td></tr>
+    <tr><td class="ln">54</td><td class="code">setColumnWidths(sheet);</td>
+      <td>Anchos de columna copiados del reporte de referencia.</td></tr>
+  </table></div>
+  <div class="note"><strong>Diferencia de diseño con SALDO TERCERO:</strong> acá <code>write</code> no hace el trabajo, solo <strong>delega</strong> en tres métodos con nombre claro. Se lee como un índice: títulos, datos, control. SALDO TERCERO lo tiene todo adentro de <code>write</code> porque no tiene ni títulos ni controles.</div>
+
+  <h2 id="titulos">5. La tapa: <code>writeTitleRows</code>, <code>metadata</code> y <code>formatDate</code> (líneas 57–94)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">59</td><td class="code">Row firstData = sourceSheet.getRow(
+    sourceSheet.getFirstRowNum() + 1);</td>
+      <td>Toma la <strong>primera fila de datos</strong>, la que está justo debajo de los encabezados. El sistema contable repite el nombre de la empresa, el NIT y las fechas en <em>cada</em> fila, así que con leer una alcanza.</td></tr>
+    <tr><td class="ln">60–62</td><td class="code">String company = metadata(firstData, headerIndex, "lblNomCia");
+String nit = metadata(..., "Nit");
+String reportTitle = metadata(..., "TITULO");</td>
+      <td>Lee tres columnas "ocultas" del export, que no se copian a la hoja pero sirven para la tapa.<br><b>Va a:</b> <code>metadata</code>, línea 79.</td></tr>
+    <tr><td class="ln">63–64</td><td class="code">String dateRange = formatDate(metadata(..., "dFecIni"))
+    + " a " + formatDate(metadata(..., "dFecFin"));</td>
+      <td>Arma el texto de las fechas, por ejemplo <code>01-ABRIL-2026 a 30-ABRIL-2026</code>.</td></tr>
+    <tr><td class="ln">66</td><td class="code">CellStyle titleStyle = styles.title();</td>
+      <td>Estilo de la tapa: Albertus Extra Bold de 12 puntos, centrado.</td></tr>
+    <tr><td class="ln">67</td><td class="code">String[] titles = {company, nit, reportTitle, dateRange};</td>
+      <td>Las 4 líneas de la tapa, en orden.</td></tr>
+    <tr><td class="ln">68–69</td><td class="code">int firstCol = DERIVED_COLUMNS.size();      // 4 → E
+int lastCol = firstCol + COLUMNS_TO_KEEP.size() - 1; // 9 → J</td>
+      <td>Calcula desde qué columna hasta cuál centrar el título: de la <strong>E</strong> a la <strong>J</strong>. Así el título queda centrado sobre los datos y no sobre LARGO, N1, N2 y N3.</td></tr>
+    <tr><td class="ln">70–76</td><td class="code">for (int i = 0; i &lt; titles.length; i++) {
+    Row row = sheet.createRow(i);
+    Cell cell = row.createCell(firstCol);
+    cell.setCellValue(titles[i]);
+    cell.setCellStyle(titleStyle);
+    sheet.addMergedRegion(
+        new CellRangeAddress(i, i, firstCol, lastCol));
+}</td>
+      <td>Una vuelta por cada título: crea la fila <code>i</code> (0 a 3, que en Excel son las filas 1 a 4), escribe el texto en la E y <strong>combina las celdas</strong> E a J. <code>CellRangeAddress(filaDesde, filaHasta, colDesde, colHasta)</code> es el "Combinar y centrar" de Excel.</td></tr>
+    <tr><td class="ln">79–83</td><td class="code">private static String metadata(Row row, Map headerIndex, String column) {
+    Integer index = headerIndex.get(column);
+    String value = index == null ? null : Cells.stringValue(row.getCell(index));
+    return value == null ? "" : value.trim();
+}</td>
+      <td>Busca una columna por nombre y devuelve su texto. Es <strong>tolerante</strong>: si la columna no existe o está vacía, devuelve <code>""</code> en vez de romper. Por eso estas columnas no están en la validación de <code>write</code>.</td></tr>
+    <tr><td class="ln">86–94</td><td class="code">private static String formatDate(String exportDate) {
+    String[] parts = exportDate.split("-");
+    if (parts.length != 3) return exportDate;
+    String month = parts[1].replace(".", "").toLowerCase();
+    return parts[0] + "-" + SPANISH_MONTHS.getOrDefault(...) + "-" + parts[2];
+}</td>
+      <td>Convierte <code>"01-abr.-2026"</code> en <code>"01-ABRIL-2026"</code>:
+        <ol><li>Separa por guiones: <code>["01", "abr.", "2026"]</code>.</li>
+        <li>Si no hay exactamente 3 partes, devuelve el texto tal cual.</li>
+        <li>Al mes le saca el punto y lo pasa a minúscula: <code>"abr"</code>.</li>
+        <li>Lo busca en <code>SPANISH_MONTHS</code> (línea 28): <code>"ABRIL"</code>.</li></ol></td></tr>
+  </table></div>
+
+  <h2 id="datos">6. Las páginas: <code>writeData</code> (líneas 96–130)</h2>
+  <p>Tiene la <strong>misma estructura</strong> que el <code>write</code> de SALDO TERCERO. Solo cambian tres cosas, que van marcadas con ⚡.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">97–100</td><td class="code">List&lt;Integer&gt; sourceIndexes = ...</td>
+      <td>Nombres → números de columna. Posición 0 = <strong>CODCTA</strong>, 1 = Tnomcta, 2 a 5 = ANTERIOR, DEBITOS, CREDITOS y SALDO_FINAL.</td></tr>
+    <tr><td class="ln">101</td><td class="code">int derivedCount = DERIVED_COLUMNS.size();</td>
+      <td>⚡ Acá vale <strong>4</strong> (LARGO, N1, N2, N3), no 3. Por eso los datos arrancan en la E.</td></tr>
+    <tr><td class="ln">103–104</td><td class="code">CellStyle headerStyle = styles.header(false);
+CellStyle derivedHeaderStyle = styles.plainHeader(false);</td>
+      <td>Estilos del encabezado. El <code>false</code> significa <strong>sin negrita</strong>; en SALDO TERCERO es <code>true</code>. Así es el reporte de referencia.</td></tr>
+    <tr><td class="ln">105</td><td class="code">Map&lt;Integer, ReportStyles.Pair&gt; levelStyles =
+    buildLevelStyles();</td>
+      <td>⚡ En vez de dos marcadores (rojo y normal), acá se arma una <strong>caja de marcadores</strong>: un mapa <em>cantidad de dígitos → estilo</em>. Se crea una sola vez. Ver sección 8.</td></tr>
+    <tr><td class="ln">107</td><td class="code">int targetRowNum = TITLE_ROWS;</td>
+      <td>⚡ Arranca en <strong>4</strong>, no en 0, porque las filas 0 a 3 ya las ocupa la tapa. El encabezado cae en la fila 4 de POI, que es la 5 de Excel.</td></tr>
+    <tr><td class="ln">108–117</td><td class="code">for (...) { ... if (primera fila) writeHeaderRow ... }</td>
+      <td>Igual que en SALDO TERCERO: recorre las filas, salta las vacías y la primera la usa como encabezado.</td></tr>
+    <tr><td class="ln">118</td><td class="code">String codcta = Cells.stringValue(
+    sourceRow.getCell(sourceIndexes.get(0)));</td>
+      <td>Lee el <strong>código de cuenta</strong> de esta fila (posición 0). Es el dato que decide el color.</td></tr>
+    <tr><td class="ln">119</td><td class="code">ReportStyles.Pair style =
+    styleForCode(levelStyles, codcta);</td>
+      <td><strong>LA DECISIÓN DEL COLOR.</strong> Le pregunta a la caja de marcadores qué color corresponde a este código.<br><b>Va a:</b> <code>styleForCode</code>, línea 177.</td></tr>
+    <tr><td class="ln">120</td><td class="code">writeDerivedFormulas(targetRow, style.text());</td>
+      <td>Escribe LARGO, N1, N2 y N3 en A a D, <strong>con el color ya elegido</strong>.</td></tr>
+    <tr><td class="ln">121–128</td><td class="code">for (int c = 0; c &lt; sourceIndexes.size(); c++) {
+    Cell targetCell = targetRow.createCell(c + derivedCount);
+    targetCell.setCellStyle(c &lt; 2 ? style.text() : style.number());
+    ...
+    Cells.copyValue(sourceCell, targetCell);
+}</td>
+      <td>Copia las 6 columnas a E–J. <code>c &lt; 2</code>: CODCTA y Tnomcta son texto, el resto son números con <code>INTEGER_FORMAT</code>.<br><code>INTEGER_FORMAT = "#,##0;[Red]\(#,##0\)"</code> tiene <strong>dos partes</strong> separadas por <code>;</code>: la primera es para positivos (<code>1,500</code>) y la segunda para negativos: <span class="red">(1,500)</span> en rojo y entre paréntesis, como en contabilidad.</td></tr>
+  </table></div>
+
+  <h2 id="formulas">7. <code>writeDerivedFormulas</code> (líneas 145–159)</h2>
+  <p>Es el que pegaste la vez anterior. Repaso rápido:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Código</th><th>Qué hace</th></tr>
+    <tr><td class="code">int excelRow = row.getRowNum() + 1;</td><td>POI cuenta desde 0 y Excel desde 1.</td></tr>
+    <tr><td class="code">String codctaRef = "E" + excelRow;</td><td>CODCTA está en la <strong>E</strong>, porque adelante hay 4 columnas derivadas.</td></tr>
+    <tr><td class="code">"LEN(E6)"</td><td><strong>LARGO</strong>: cuántos dígitos tiene el código. Sirve para filtrar en Excel, por ejemplo "mostrame solo las cuentas de 4 dígitos".</td></tr>
+    <tr><td class="code">"LEFT(E6,1)" / ",2" / ",4"</td><td><strong>N1</strong> = clase, <strong>N2</strong> = grupo, <strong>N3</strong> = cuenta. Sirven para tablas dinámicas o <code>SUMAR.SI</code> por nivel.</td></tr>
+    <tr><td class="code">cell.setCellStyle(style);</td><td>Mismo color que el resto de la fila.</td></tr>
+  </table></div>
+  <div class="note"><strong>Pregunta para pensar:</strong> el color de la fila se decide en Java contando los dígitos (<code>codcta.trim().length()</code>), y la columna LARGO hace la misma cuenta pero en Excel (<code>LEN</code>). Es la misma regla calculada en dos lugares. ¿Qué pasaría si el código viniera con espacios al final? Pista: Java hace <code>trim()</code> y <code>LEN</code> no.</div>
+
+  <h2 id="colores">8. La caja de marcadores: <code>buildLevelStyles</code> y <code>styleForCode</code> (líneas 161–182)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">167</td><td class="code">Map&lt;Integer, ReportStyles.Pair&gt; map = new LinkedHashMap&lt;&gt;();</td>
+      <td>Un mapa vacío. La <strong>clave</strong> es la cantidad de dígitos y el <strong>valor</strong> es el par de estilos (texto y número).</td></tr>
+    <tr><td class="ln">168–170</td><td class="code">ReportStyles.Pair red = styles.red(INTEGER_FORMAT);
+map.put(1, red);
+map.put(2, red);</td>
+      <td>Crea el rojo <strong>una sola vez</strong> y lo usa para 1 y 2 dígitos. Es el mismo objeto con dos claves; así se ahorran estilos (Excel tiene un límite de unos 64.000).</td></tr>
+    <tr><td class="ln">171</td><td class="code">map.put(4, styles.blue(...));</td><td><span class="blue">Azul</span> <code>#0070C0</code> para 4 dígitos (la constante <code>BLUE_ACCOUNT</code> en <code>ReportStyles.java:21</code>).</td></tr>
+    <tr><td class="ln">172</td><td class="code">map.put(6, styles.bold(...));</td><td><span class="bold">Negro negrita</span> para 6 dígitos.</td></tr>
+    <tr><td class="ln">173</td><td class="code">map.put(8, styles.plain(...));</td><td>Negro normal para 8 dígitos.</td></tr>
+    <tr><td class="ln">179</td><td class="code">int length = codcta == null ? 0 : codcta.trim().length();</td>
+      <td>Cuenta los dígitos, sin espacios. Si no hay código, usa 0.</td></tr>
+    <tr><td class="ln">180</td><td class="code">ReportStyles.Pair match = styles.get(length);</td>
+      <td>Busca en el mapa. Si el largo es 1, 2, 4, 6 u 8 lo encuentra; si es 0, 3, 5, 7, 10… devuelve <code>null</code>.</td></tr>
+    <tr><td class="ln">181</td><td class="code">return match != null ? match : styles.get(8);</td>
+      <td><strong>Valor por defecto:</strong> si no encontró nada, usa el normal (el de 8). Así ninguna fila se queda sin estilo.</td></tr>
+  </table></div>
+  <div class="note"><strong>¿Por qué un <code>Map</code> y no un montón de <code>if</code>?</strong> Con <code>if (largo == 1 || largo == 2) … else if (largo == 4) …</code> funcionaría igual. Pero el mapa <strong>separa los datos (la tabla de colores) de la lógica (buscar)</strong>. Si mañana el cliente quiere que las de 6 dígitos sean verdes, cambiás una línea de la tabla y no tocás la lógica.</div>
+
+  <h2 id="control">9. La contratapa: <code>writeControlRows</code> (líneas 184–269)</h2>
+  <p>Esto es lo que te mostré al principio, cuando buscabas "dónde se reúnen los N1". Ahora, línea por línea:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">190</td><td class="code">int codctaCol = DERIVED_COLUMNS.size();</td><td>4, que es la columna E: donde quedó CODCTA en la hoja <em>nueva</em>.</td></tr>
+    <tr><td class="ln">191–204</td><td class="code">Map&lt;String, Integer&gt; classRow = new LinkedHashMap&lt;&gt;();
+for (int r = TITLE_ROWS + 1; r &lt;= sheet.getLastRowNum(); r++) {
+    ...
+    if (code.length() == 1) classRow.put(code, r + 1);
+}</td>
+      <td>Recorre la hoja <strong>ya escrita</strong>, desde la primera fila de datos, y anota dónde quedó cada <strong>clase</strong> (código de 1 dígito): <code>"1" → fila 6</code>, <code>"2" → fila 80</code>… Se guarda <code>r + 1</code> porque las fórmulas usan números de fila de Excel.<br><b>Va a:</b> todas las fórmulas de control.</td></tr>
+    <tr><td class="ln">206–211</td><td class="code">int anterior = codctaCol + 2;            // 6 → G
+String debitosCol  = ...(anterior + 1);  // "H"
+String creditosCol = ...(anterior + 2);  // "I"
+String saldoCol    = ...(anterior + 3);  // "J"
+int labelCellIndex   = anterior + 2;     // I
+int formulaCellIndex = anterior + 3;     // J</td>
+      <td>Calcula las <strong>letras</strong> de las columnas a partir de la posición. <code>CellReference.convertNumToColString(7)</code> devuelve <code>"H"</code>. El rótulo ("PYG") va en la I y la fórmula en la J.</td></tr>
+    <tr><td class="ln">214</td><td class="code">int rowNum = sheet.getLastRowNum() + 3;</td><td>Deja <strong>2 filas en blanco</strong> después de los datos.</td></tr>
+    <tr><td class="ln">216–218</td><td class="code">String pyg = balanceFormula(saldoCol, classRow,
+    List.of("4"), List.of("5", "6", "7"));</td>
+      <td><strong>PYG</strong> (pérdidas y ganancias) = ingresos (clase 4) − gastos y costos (5, 6, 7). Queda algo como <code>+J120-J150-J190-J200</code>. Se guarda <code>pygRow</code> para usarlo en la fórmula siguiente.</td></tr>
+    <tr><td class="ln">220–225</td><td class="code">String patrimonio = classRow.containsKey("3")
+    ? "+" + saldoCol + classRow.get("3") + "+" + saldoCol + pygRow
+    : "+" + saldoCol + pygRow;</td>
+      <td><strong>PATRIMONIO</strong> = clase 3 + el resultado del PYG. Si no hay clase 3, solo el PYG.</td></tr>
+    <tr><td class="ln">227–230</td><td class="code">String ecContable = balanceFormula(..., List.of("1"), List.of("2"))
+    + "-" + saldoCol + patrimonioRow;</td>
+      <td><strong>EC CONTABLE</strong> (ecuación contable) = Activo (1) − Pasivo (2) − Patrimonio. <strong>Tiene que dar 0.</strong> Si no da 0, algo está mal en la contabilidad.</td></tr>
+    <tr><td class="ln">232–240</td><td class="code">for (int r : classRow.values()) partidaDoble.append("+" + debitosCol + r);
+for (int r : classRow.values()) partidaDoble.append("-" + creditosCol + r);</td>
+      <td><strong>PARTIDA DOBLE</strong> = la suma de los débitos de todas las clases − la suma de sus créditos. <strong>También tiene que dar 0</strong>: todo lo que entra por un lado sale por el otro.</td></tr>
+    <tr><td class="ln">243–257</td><td class="code">balanceFormula(col, classRow, plus, minus)</td>
+      <td>Ayudante que arma <code>+J6+J…-J…</code>. Por cada código de <code>plus</code> agrega <code>+</code> y por cada uno de <code>minus</code> agrega <code>-</code>. Si una clase no existe en el archivo, <strong>la salta</strong> sin romper.</td></tr>
+    <tr><td class="ln">259–269</td><td class="code">addControlRow(sheet, rowNum, labelIdx, formulaIdx, label, formula, style)</td>
+      <td>Crea la fila: rótulo en la I con <code>style.text()</code> y fórmula en la J con <code>style.number()</code>, que es Arial 10 y sin bordes.</td></tr>
+  </table></div>
+  <div class="note"><strong>Ojo, detalle fino (línea 198):</strong> solo se reconocen clases si la celda CODCTA es de tipo <strong>texto</strong> (<code>CellType.STRING</code>). Si algún día el sistema exporta CODCTA como <em>número</em>, <code>Cells.copyValue</code> lo copia como número, <code>classRow</code> queda vacío y las 4 fórmulas de control salen vacías <strong>sin ningún error</strong>. Si hoy las fórmulas salen bien, es porque tu export trae el código como texto. Conviene saberlo por si eso cambia.</div>
+
+  <h2 id="ejemplo">10. Ejemplo con 4 filas</h2>
+  <p>Supongamos que el Libro Mayor trae estas filas, que quedan en las filas 6 a 10 del Excel nuevo:</p>
+  <div class="table-wrap"><table class="sheet">
+    <tr><th>Fila</th><th>A · LARGO</th><th>B · N1</th><th>C · N2</th><th>D · N3</th><th>E · CODCTA</th><th>F · Tnomcta</th><th>J · SALDO_FINAL</th><th>¿Por qué ese color?</th></tr>
+    <tr class="r"><td>6</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>ACTIVO</td><td>9,000,000</td><td>1 dígito → <code>map.get(1)</code> → rojo</td></tr>
+    <tr class="r"><td>7</td><td>2</td><td>1</td><td>11</td><td>11</td><td>11</td><td>DISPONIBLE</td><td>2,000,000</td><td>2 dígitos → rojo</td></tr>
+    <tr class="b"><td>8</td><td>4</td><td>1</td><td>11</td><td>1105</td><td>1105</td><td>CAJA</td><td>1,500,000</td><td>4 dígitos → azul</td></tr>
+    <tr class="k"><td>9</td><td>6</td><td>1</td><td>11</td><td>1105</td><td>110505</td><td>CAJA GENERAL</td><td>1,500,000</td><td>6 dígitos → negrita</td></tr>
+    <tr><td>10</td><td>8</td><td>1</td><td>11</td><td>1105</td><td>11050501</td><td>CAJA PRINCIPAL</td><td>1,500,000</td><td>8 dígitos → normal</td></tr>
+  </table></div>
+  <p>La fila 6 tiene código <code>"1"</code> (un dígito), así que <code>writeControlRows</code> anota <code>classRow = {"1" → 6}</code>. Más adelante, EC CONTABLE va a usar <code>J6</code>.</p>
+
+  <h3>Para practicar</h3>
+  <ol>
+    <li>Si el cliente pide que las cuentas de 6 dígitos salgan en verde, ¿qué método tocás y cuántas líneas?</li>
+    <li>¿En qué fila de Excel queda el encabezado si <code>TITLE_ROWS</code> pasa a valer 5? ¿Hay que cambiar algo en <code>writeDerivedFormulas</code>? (Pista: <code>getRowNum()</code>.)</li>
+    <li>¿Qué estilo recibe un código de 3 dígitos, como <code>110</code>? ¿Qué línea lo decide?</li>
+    <li>¿Por qué <code>writeControlRows</code> se llama <em>después</em> de <code>writeData</code> y no antes?</li>
+  </ol>
+</main>
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var root = document.documentElement;
+    try { var saved = localStorage.getItem('theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+    btn.addEventListener('click', function () {
+      var dark = root.getAttribute('data-theme') === 'dark' ||
+        (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var next = dark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>

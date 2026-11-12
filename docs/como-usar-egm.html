@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de EGM</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --surface: #ffffff; --ink: #1d1d1f; --muted: #5f6368;
+    --line: #e4e1da; --accent: #0070c0; --code-bg: #f3f1ec; --hl: #fff4d6;
+    --ele: #6b5bd2; --gold: #d98a00; --you: #1f8a4c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16171a; --surface: #1e2024; --ink: #ececec; --muted: #a3a7ad;
+      --line: #33363c; --accent: #5aa9e6; --code-bg: #26292e; --hl: #3a3420;
+      --ele: #a99bff; --gold: #ffb84d; --you: #5fd08f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16171a; --surface: #1e2024; --ink: #ececec; --muted: #a3a7ad;
+    --line: #33363c; --accent: #5aa9e6; --code-bg: #26292e; --hl: #3a3420;
+    --ele: #a99bff; --gold: #ffb84d; --you: #5fd08f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 1.4rem; margin: 44px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.1rem; margin: 24px 0 8px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  a { color: var(--accent); }
+  code, pre { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 0.88em; }
+  :not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+  .note { background: var(--hl); border-left: 4px solid #e0a800; padding: 12px 16px; border-radius: 6px; margin: 16px 0; }
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .role { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; border-top: 4px solid var(--c); }
+  .role h3 { margin: 0 0 6px; color: var(--c); }
+  .role p { margin: 0; font-size: 0.95rem; }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps > li { counter-increment: s; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 6px 56px; margin: 12px 0; position: relative; }
+  .steps > li::before { content: counter(s); position: absolute; left: 16px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; }
+  .steps h3 { margin: 0 0 4px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.93rem; background: var(--surface); }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+  th { background: var(--code-bg); }
+  .theme-toggle { float: right; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0; }
+  .flow span { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
+  .flow b { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <button class="theme-toggle" id="themeToggle" type="button">Tema</button>
+  <h1>Cómo usar EGM (Elephant-Goldfish Model)</h1>
+  <p class="lead">Guía práctica para usar el plugin <a href="https://github.com/google/elephant-goldfish-model">google/elephant-goldfish-model</a> con Claude Code en este proyecto: qué es, cómo se instala, el flujo de trabajo y los comandos.</p>
+
+  <h2>1. La idea en una frase</h2>
+  <p><strong>Diseñás con un elefante y revisás con un pez dorado.</strong></p>
+  <p>El elefante "nunca olvida": conoce tu proyecto, la charla y las decisiones anteriores. Con todo eso escribe el diseño. El pez dorado "no recuerda nada": lee <em>solo el documento</em> y el código que el documento cita. Si el documento no se entiende sin la charla previa, el pez dorado lo va a notar. Ese es el truco: detecta los supuestos que diste por obvios y nunca escribiste.</p>
+  <div class="roles">
+    <div class="role" style="--c: var(--ele)"><h3>🐘 Elefante</h3><p>Conoce el proyecto, los requisitos y las decisiones previas. <strong>Explora el problema y redacta la especificación.</strong></p></div>
+    <div class="role" style="--c: var(--gold)"><h3>🐟 Pez dorado</h3><p>Lee solo el documento y el código que referencia, sin la conversación previa. <strong>Encuentra supuestos ocultos, requisitos confusos y riesgos.</strong></p></div>
+    <div class="role" style="--c: var(--you)"><h3>🧑 Vos</h3><p>Conocés los objetivos reales. <strong>Resolvés los trade-offs, aprobás el diseño y decidís qué se construye.</strong></p></div>
+  </div>
+  <div class="note"><strong>¿Por qué funciona?</strong> Cuando un mismo agente diseña y revisa, revisa con los mismos sesgos con los que diseñó. Un revisor con <em>contexto limpio</em> se parece más a lo que le va a pasar al próximo programador (o a vos dentro de 6 meses) que abra el documento sin saber nada.</div>
+
+  <h2>2. Instalación en Claude Code</h2>
+  <pre># 1. Agregar el marketplace del plugin
+claude plugin marketplace add google/elephant-goldfish-model
+
+# 2. Instalar el plugin completo
+claude plugin install egm@egm</pre>
+  <p>Después <strong>abrí una sesión nueva</strong> de Claude Code para que se carguen los comandos.</p>
+  <div class="note">
+    <ul style="margin:0">
+      <li>Instalá el <strong>plugin completo</strong>, no solo la carpeta <code>skills/</code>: las skills leen en tiempo de ejecución las personas de <code>agents/</code> y los estándares de <code>resources/</code>.</li>
+      <li>Las revisiones necesitan <strong>subagentes con contexto limpio</strong>. Claude Code los tiene (herramienta <code>Agent</code>). Si un entorno no los tiene, EGM corta la revisión en vez de fingirla.</li>
+      <li>Los comandos llevan el prefijo <code>/egm:</code>. Por ejemplo: <code>/egm:egm-review</code>.</li>
+      <li>Las skills tienen <code>disable-model-invocation: true</code>: <strong>solo se activan cuando vos escribís el comando</strong>. Claude no las dispara solo.</li>
+    </ul>
+  </div>
+
+  <h2>3. El flujo principal, paso a paso</h2>
+  <div class="flow"><span>egm-brainstorm</span><b>→</b><span>egm-draft</span><b>→</b><span>egm-review</span><b>→</b><span>egm-resolve</span><b>→</b><span>revisión humana</span><b>→</b><span>implementar</span><b>→</b><span>egm-drift-report</span></div>
+  <ol class="steps">
+    <li><h3>Explorar la idea</h3>
+      <pre>/egm:egm-brainstorm Agregar &lt;la funcionalidad nueva&gt; al normalizador.</pre>
+      <p>El agente te hace <strong>preguntas abiertas en varios turnos</strong> hasta que el problema y sus límites queden claros. No lanza a los peces dorados hasta que vos confirmes que está listo. Después varios revisores atacan la idea en paralelo, cada uno desde un ángulo distinto. <strong>Resultado:</strong> <code>concepts_brief.md</code>.</p></li>
+    <li><h3>Redactar la especificación</h3>
+      <pre>/egm:egm-draft</pre>
+      <p>Convierte el brief en <code>design_draft.md</code>, <strong>sección por sección</strong>, y frena después de cada una para que des tu opinión en el chat.</p></li>
+    <li><h3>Revisar con peces dorados</h3>
+      <pre>/egm:egm-review design_draft.md</pre>
+      <p>Cinco etapas, cada una con un revisor de contexto limpio:</p>
+      <ol>
+        <li><strong>Zoom out inicial:</strong> ¿el diseño resuelve el problema correcto?</li>
+        <li><strong>Comprensión:</strong> ¿se entiende sin la charla previa?</li>
+        <li><strong>Crítica de diseño:</strong> ¿cuáles son los puntos débiles y los casos borde?</li>
+        <li><strong>Zoom out intermedio:</strong> ¿sigue teniendo sentido en el conjunto?</li>
+        <li><strong>Listo para implementar:</strong> ¿alcanza el plan para construirlo?</li>
+      </ol>
+      <p>Va a dar <strong>mucho</strong> feedback, a propósito. Quedate con lo relevante e ignorá el resto.</p></li>
+    <li><h3>Resolver los hallazgos</h3>
+      <pre>/egm:egm-resolve</pre>
+      <p>Recorren juntos cada hallazgo y deciden qué cambiar en el documento.</p></li>
+    <li><h3>Revisión humana</h3>
+      <p>Mandá el diseño en un PR a otra persona. EGM no reemplaza a un humano, lo complementa.</p></li>
+    <li><h3>Implementar</h3>
+      <p>Pedile al agente que construya <strong>siguiendo el documento</strong>. Si se equivoca un poco, corregís puntualmente. Si se va muy lejos, el problema está en el documento: lo actualizás y repetís.</p></li>
+    <li><h3>Controlar la deriva (una vez por semana)</h3>
+      <pre>/egm:egm-drift-report docs/designs/</pre>
+      <p>Compara cada documento de diseño con el código actual y te dice dónde se separaron. Vos elegís si actualizar el documento o el código.</p></li>
+  </ol>
+
+  <h2>4. Todas las skills</h2>
+  <p>No hace falta seguir el flujo completo. Usá la que resuelva tu cuello de botella del momento.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Comando</th><th>Para qué</th><th>Produce</th></tr>
+    <tr><td><code>/egm:egm-brainstorm</code></td><td>Poner a prueba una idea a medio cocinar.</td><td><code>concepts_brief.md</code></td></tr>
+    <tr><td><code>/egm:egm-draft</code></td><td>Convertir un brief o unas notas en un documento de diseño.</td><td><code>design_draft.md</code></td></tr>
+    <tr><td><code>/egm:egm-review &lt;doc&gt;</code></td><td>Revisar un diseño en 5 etapas con peces dorados.</td><td>Informe de revisión</td></tr>
+    <tr><td><code>/egm:egm-resolve</code></td><td>Trabajar los hallazgos de la revisión y acordar cambios.</td><td>Documento actualizado</td></tr>
+    <tr><td><code>/egm:egm-review-loop</code></td><td>Correr un grupo de revisores a medida, también para documentos que no son de software.</td><td>Informe</td></tr>
+    <tr><td><code>/egm:egm-bootstrap &lt;ruta&gt;</code></td><td>Generar los README de un código que ya existe, de abajo hacia arriba.</td><td><code>README.md</code> por carpeta</td></tr>
+    <tr><td><code>/egm:egm-drift-report &lt;carpeta&gt;</code></td><td>Comparar los documentos con el código actual.</td><td>Reporte de deriva</td></tr>
+  </table></div>
+
+  <h2>5. Cómo encaja en este proyecto (excel-normalizer)</h2>
+  <h3>Estructura recomendada</h3>
+  <pre>excel-normalizer/
+└── docs/
+    ├── COMO-FUNCIONA.md              ← ya existe
+    ├── explicacion-*.html            ← guías de aprendizaje
+    └── designs/                      ← NUEVO: diseños aprobados de EGM
+        ├── SITEMAP.md                ← índice de los diseños
+        └── &lt;funcionalidad&gt;.md       ← una especificación por funcionalidad</pre>
+  <h3>Un buen primer uso, sin escribir nada nuevo</h3>
+  <p>Para probar EGM con algo que ya existe, pasale a un pez dorado la guía actual:</p>
+  <pre>/egm:egm-review docs/COMO-FUNCIONA.md</pre>
+  <p>Si el pez dorado no entiende algo de esa guía sin tu contexto, es una señal de qué le falta.</p>
+  <h3>Para la funcionalidad nueva</h3>
+  <ol>
+    <li><code>/egm:egm-brainstorm</code> con la idea, en una frase.</li>
+    <li>Respondé las preguntas con calma. Es la etapa más valiosa.</li>
+    <li><code>/egm:egm-draft</code> y aprobá sección por sección.</li>
+    <li><code>/egm:egm-review</code> sobre el borrador.</li>
+    <li>Guardá el diseño aprobado en <code>docs/designs/</code> y recién ahí se implementa.</li>
+  </ol>
+
+  <h2>6. Cosas a tener en cuenta</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Tema</th><th>Qué saber</th></tr>
+    <tr><td>Costo y tiempo</td><td>Brainstorm y review lanzan <strong>varios subagentes</strong>, así que gastan más tokens y tardan más que una charla normal. No lo uses para un bug de una línea: <em>"usá la herramienta correcta para el trabajo"</em>, dice la propia guía.</td></tr>
+    <tr><td>Tono</td><td>Los revisores tienen la orden de <strong>no adular</strong>: critican primero, buscan contraargumentos y no dicen "excelente idea". Es intencional.</td></tr>
+    <tr><td>Tu otro flujo (SDD)</td><td>Ya tenés instaladas skills de <code>sdd-*</code> (explore, propose, spec, design…) que hacen algo parecido. Conviene <strong>elegir uno por funcionalidad</strong> para no mezclar artefactos (<code>concepts_brief.md</code> y <code>design_draft.md</code> contra propuestas y specs de SDD). La diferencia fuerte de EGM es la revisión con contexto limpio en 5 etapas.</td></tr>
+    <tr><td>Archivos, no chat</td><td>EGM escribe los resultados en <strong>archivos</strong> y te pasa la ruta. No espera que leas un plan largo en el chat.</td></tr>
+    <tr><td>No reemplaza tests</td><td>Una revisión de diseño no reemplaza los tests ni el criterio humano.</td></tr>
+  </table></div>
+
+  <h2>7. Para leer más</h2>
+  <ul>
+    <li><a href="https://github.com/google/elephant-goldfish-model">Repositorio y README</a></li>
+    <li><a href="https://github.com/google/elephant-goldfish-model/blob/main/docs/getting_started.md">Guía de inicio (flujo y estructura de carpetas)</a></li>
+    <li><a href="https://github.com/google/elephant-goldfish-model/blob/main/docs/harnesses.md">Instalación y límites por herramienta</a></li>
+    <li><a href="https://medium.com/@drensin/elephants-goldfish-and-the-new-golden-age-of-software-engineering-c33641a48874">Ensayo original de Dave Rensin</a> (la filosofía detrás)</li>
+  </ul>
+  <p style="color:var(--muted);font-size:0.85rem">EGM tiene licencia Apache 2.0 y no es un producto oficialmente soportado por Google.</p>
+</main>
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var root = document.documentElement;
+    try { var saved = localStorage.getItem('theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+    btn.addEventListener('click', function () {
+      var dark = root.getAttribute('data-theme') === 'dark' ||
+        (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var next = dark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>

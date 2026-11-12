@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoja SALDO TERCERO</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --surface: #ffffff; --ink: #1d1d1f; --muted: #5f6368;
+    --line: #e4e1da; --accent: #0070c0; --red: #c62828; --code-bg: #f3f1ec;
+    --hl: #fff4d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16171a; --surface: #1e2024; --ink: #ececec; --muted: #a3a7ad;
+      --line: #33363c; --accent: #5aa9e6; --red: #ff6b6b; --code-bg: #26292e;
+      --hl: #3a3420;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16171a; --surface: #1e2024; --ink: #ececec; --muted: #a3a7ad;
+    --line: #33363c; --accent: #5aa9e6; --red: #ff6b6b; --code-bg: #26292e;
+    --hl: #3a3420;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 1.4rem; margin: 48px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  code, pre { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 0.88em; }
+  :not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+  .note { background: var(--hl); border-left: 4px solid #e0a800; padding: 12px 16px; border-radius: 6px; margin: 16px 0; }
+  .kid { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 20px 16px; }
+  .red { color: var(--red); font-weight: 700; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 16px 0 0; font-size: 0.95rem; }
+  nav a, a { color: var(--accent); }
+  .diagram { width: 100%; height: 720px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: var(--surface); }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; text-align: left; }
+  th { background: var(--code-bg); }
+  td.ln { white-space: nowrap; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+  td.code { white-space: pre; font-family: ui-monospace, Menlo, monospace; font-size: 0.84rem; }
+  .sheet td { text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 0.84rem; }
+  .sheet .r td { color: var(--red); font-weight: 700; }
+  .sheet th { text-align: center; }
+  .theme-toggle { float: right; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <button class="theme-toggle" id="themeToggle" type="button">Tema</button>
+  <h1>Cómo se arma la hoja SALDO TERCERO</h1>
+  <p class="lead">Explicación del método <code>SaldoTerceroSheet.write</code> y de <code>writeDerivedFormulas</code>: qué hace cada línea, de dónde vienen los datos y a dónde van.</p>
+  <nav>
+    <a href="#aclaracion">0. Aclaración</a>
+    <a href="#nino">1. Como si fueras un niño</a>
+    <a href="#diagrama">2. Diagrama</a>
+    <a href="#write">3. write() línea por línea</a>
+    <a href="#formulas">4. writeDerivedFormulas línea por línea</a>
+    <a href="#ejemplo">5. Ejemplo con una fila real</a>
+  </nav>
+
+  <h2 id="aclaracion">0. Aclaración importante antes de empezar</h2>
+  <div class="note">
+    <p>Los dos fragmentos que pegaste vienen de <strong>archivos distintos</strong>:</p>
+    <ul>
+      <li><code>write(...)</code> es de <code>SaldoTerceroSheet.java</code>.</li>
+      <li>El <code>writeDerivedFormulas</code> con <code>"E"</code> y <code>LEN</code> es de <code>MayorSheet.java</code>.</li>
+    </ul>
+    <p>Cada hoja tiene <em>su propio</em> <code>writeDerivedFormulas</code> (es <code>private</code>, solo lo ve su clase). La idea es la misma, pero cambian dos cosas:</p>
+    <div class="table-wrap"><table>
+      <tr><th></th><th>MayorSheet</th><th>SaldoTerceroSheet</th></tr>
+      <tr><td>Columnas derivadas</td><td>LARGO, N1, N2, N3 (4)</td><td>N1, N2, N3 (3)</td></tr>
+      <tr><td>Dónde queda el código de cuenta</td><td>columna <strong>E</strong></td><td>columna <strong>D</strong></td></tr>
+      <tr><td>Fórmulas</td><td><code>LEN</code>, <code>LEFT 1</code>, <code>LEFT 2</code>, <code>LEFT 4</code></td><td><code>LEFT 1</code>, <code>LEFT 2</code>, <code>LEFT 4</code></td></tr>
+    </table></div>
+    <p><strong>¿Por qué E en una y D en la otra?</strong> El código de cuenta es siempre la primera columna copiada. Si delante hay 4 columnas derivadas (A, B, C, D), el código cae en la E. Si hay 3 (A, B, C), cae en la D.</p>
+  </div>
+
+  <h2 id="nino">1. Como si fueras un niño</h2>
+  <div class="kid">
+    <p>Imaginá que tenés un <strong>cuaderno viejo</strong> (el Excel que exporta el sistema contable) y te piden pasarlo en limpio a un <strong>cuaderno nuevo</strong>.</p>
+    <ol>
+      <li><strong>Primero mirás la primera página</strong> para saber en qué columna está cada cosa: "el NIT está en la columna 5, el código en la 1…". Eso hace <code>Cells.headerIndex</code>.</li>
+      <li><strong>Preparás dos marcadores</strong>: uno <span class="red">rojo</span> y uno negro. Eso hace <code>styles.red(...)</code> y <code>styles.plain(...)</code>.</li>
+      <li><strong>Copiás renglón por renglón.</strong> Antes de escribir cada renglón te hacés una pregunta: <em>"¿este renglón tiene NIT?"</em>
+        <ul>
+          <li>Si <strong>no</strong> tiene NIT, es un <strong>total</strong> de la cuenta → agarrás el marcador <span class="red">rojo</span>.</li>
+          <li>Si <strong>sí</strong> tiene NIT, es una persona o empresa → agarrás el marcador negro.</li>
+        </ul>
+      </li>
+      <li><strong>Con ese mismo marcador</strong> escribís todo el renglón:
+        <ul>
+          <li>Primero tres cajitas al principio (N1, N2, N3), que son pedacitos del código: el primer número, los dos primeros y los cuatro primeros.</li>
+          <li>Después copiás lo demás: código, nombre, NIT, saldos…</li>
+        </ul>
+      </li>
+    </ol>
+    <p><strong>¿Cuál era el error de antes?</strong> El niño escribía las tres cajitas <em>antes de elegir el marcador</em>, con un lápiz cualquiera. Después agarraba el rojo y seguía con el resto. Por eso el renglón quedaba rojo <em>desde la cuarta cajita</em> y no completo.</p>
+    <p><strong>El arreglo:</strong> primero elegís el marcador y después escribís <em>todo</em> el renglón con él.</p>
+  </div>
+
+  <h2 id="diagrama">2. Diagrama del flujo</h2>
+  <p>De izquierda a derecha: el Excel de origen, lo que se prepara una sola vez, la decisión de color que se toma en cada fila, las dos formas de escribir celdas y la hoja final. Si no se ve, abrí <a href="diagramas/saldo-tercero-flujo.html">el diagrama en otra pestaña</a>.</p>
+  <iframe class="diagram" src="diagramas/saldo-tercero-flujo.html" title="Diagrama del flujo de SALDO TERCERO"></iframe>
+
+  <h2 id="write">3. <code>write(...)</code> línea por línea</h2>
+  <p>Archivo: <code>src/main/java/com/excelnormalizer/SaldoTerceroSheet.java</code>. Los números de línea son los del archivo actual.</p>
+  <p><strong>¿Quién llama a este método?</strong> <code>NormalizationService.java:83</code>:</p>
+  <pre>new SaldoTerceroSheet(styles).write(sources.get(SourceKind.SALDO_TERCEROS), target);</pre>
+  <ul>
+    <li><code>sourceSheet</code> es la hoja del Excel que eligió el usuario (el cuaderno viejo).</li>
+    <li><code>workbook</code> es el archivo nuevo (<code>target</code>), que ya tiene la hoja MAYOR adentro.</li>
+    <li><code>styles</code> es un <code>ReportStyles</code> compartido por las 3 hojas: ahí viven los colores.</li>
+  </ul>
+
+  <h3>Bloque A: validar que el Excel trae las columnas (líneas 34–41)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">34</td><td class="code">Map&lt;String, Integer&gt; headerIndex =
+    Cells.headerIndex(sourceSheet);</td>
+      <td>Lee la <strong>primera fila</strong> del Excel de origen y arma un diccionario <em>nombre → número de columna</em>, por ejemplo <code>"NIT_CEDULA" → 5</code>.<br><b>Viene de:</b> <code>Cells.java:18</code>.<br><b>Va a:</b> la validación de abajo y a <code>sourceIndexes</code>.</td></tr>
+    <tr><td class="ln">35–37</td><td class="code">List&lt;String&gt; missing = COLUMNS_TO_KEEP.stream()
+    .filter(c -&gt; !headerIndex.containsKey(c))
+    .toList();</td>
+      <td>Recorre la lista de columnas que necesitamos (<code>COLUMNS_TO_KEEP</code>, línea 20) y se queda con las que <strong>no</strong> aparecen en el Excel.<br><b>Va a:</b> el <code>if</code> siguiente.</td></tr>
+    <tr><td class="ln">38–41</td><td class="code">if (!missing.isEmpty()) {
+    throw new IllegalArgumentException(...);
+}</td>
+      <td>Si falta alguna columna, <strong>corta todo</strong> con un error. Es mejor fallar con un mensaje claro que generar un Excel roto.<br><b>Va a:</b> la UI, que muestra el error.</td></tr>
+  </table></div>
+
+  <h3>Bloque B: preparar lo que se usa en cada fila (líneas 43–53)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">43–46</td><td class="code">List&lt;Integer&gt; sourceIndexes = new ArrayList&lt;&gt;();
+for (String column : COLUMNS_TO_KEEP) {
+    sourceIndexes.add(headerIndex.get(column));
+}</td>
+      <td>Convierte la lista de <em>nombres</em> en una lista de <em>números de columna</em>, en el mismo orden.<br>Posición 0 = Código Cuenta, 1 = Nombre, <strong>2 = NIT</strong>, 3 = Razón Social, 4 a 7 = los saldos.<br><b>Va a:</b> el bucle, para saber de dónde leer cada dato.</td></tr>
+    <tr><td class="ln">47</td><td class="code">int derivedCount = DERIVED_COLUMNS.size();</td>
+      <td>Cuántas columnas derivadas van adelante: <strong>3</strong> (N1, N2, N3).<br><b>Va a:</b> la línea 70, para correr los datos copiados 3 lugares a la derecha.</td></tr>
+    <tr><td class="ln">49</td><td class="code">Sheet sheet = workbook.createSheet("SALDO TERCERO");</td>
+      <td>Crea la pestaña nueva dentro del archivo final. Como MAYOR se creó antes, esta queda <strong>segunda</strong>.</td></tr>
+    <tr><td class="ln">50–51</td><td class="code">CellStyle headerStyle = styles.header(true);
+CellStyle derivedHeaderStyle = styles.plainHeader(true);</td>
+      <td>Estilos del encabezado: gris con bordes para las columnas copiadas, y simple para N1, N2 y N3.<br><b>Viene de:</b> <code>ReportStyles.java</code>.</td></tr>
+    <tr><td class="ln">52</td><td class="code">ReportStyles.Pair subtotal =
+    styles.red(ReportStyles.DECIMAL_FORMAT);</td>
+      <td>El marcador <span class="red">rojo</span>: Arial 8, negrita, letra roja.<br>Un <code>Pair</code> son <strong>dos estilos</strong> juntos: <code>text()</code> para celdas de texto y <code>number()</code> para números con formato <code>#,##0.00</code>.<br><b>Viene de:</b> <code>ReportStyles.red</code>.</td></tr>
+    <tr><td class="ln">53</td><td class="code">ReportStyles.Pair detail =
+    styles.plain(ReportStyles.DECIMAL_FORMAT);</td>
+      <td>El marcador negro normal, para las filas con NIT.</td></tr>
+  </table></div>
+  <div class="note"><strong>¿Por qué se crean los estilos antes del bucle y no adentro?</strong> Excel tiene un límite de unos 64.000 estilos por archivo. Si se creara un estilo por celda, con muchos datos el archivo se rompe. Por eso se crean <strong>una sola vez</strong> y se reutilizan.</div>
+
+  <h3>Bloque C: el bucle, una vuelta por cada fila (líneas 55–77)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Línea</th><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="ln">55</td><td class="code">int targetRowNum = 0;</td>
+      <td>Contador de "en qué fila del Excel nuevo voy a escribir". Arranca en 0, que es la fila 1 de Excel.</td></tr>
+    <tr><td class="ln">56</td><td class="code">for (int r = sourceSheet.getFirstRowNum();
+     r &lt;= sourceSheet.getLastRowNum(); r++)</td>
+      <td>Recorre <strong>todas las filas</strong> del Excel de origen, de la primera a la última. <code>r</code> es la fila que se lee.</td></tr>
+    <tr><td class="ln">57–60</td><td class="code">Row sourceRow = sourceSheet.getRow(r);
+if (sourceRow == null) { continue; }</td>
+      <td>Toma la fila. Si está totalmente vacía, POI devuelve <code>null</code> y se salta. Así se evita un <code>NullPointerException</code>, y además el Excel nuevo queda sin huecos.</td></tr>
+    <tr><td class="ln">61</td><td class="code">Row targetRow = sheet.createRow(targetRowNum++);</td>
+      <td>Crea la fila en el Excel nuevo. <code>targetRowNum++</code> <strong>usa el valor actual y después le suma 1</strong> (post-incremento).</td></tr>
+    <tr><td class="ln">62–65</td><td class="code">if (r == sourceSheet.getFirstRowNum()) {
+    writeHeaderRow(targetRow, headerStyle, derivedHeaderStyle);
+    continue;
+}</td>
+      <td>Si es la primera fila (los títulos), escribe el encabezado: <code>N1 N2 N3 Código Cuenta …</code>, y pasa a la siguiente vuelta.<br><b>Va a:</b> <code>writeHeaderRow</code>, línea 81.</td></tr>
+    <tr><td class="ln">66</td><td class="code">String nit = Cells.stringValue(
+    sourceRow.getCell(sourceIndexes.get(NIT_POSITION)));</td>
+      <td>Lee el NIT de esta fila, <strong>de adentro hacia afuera</strong>:
+        <ol>
+          <li><code>NIT_POSITION</code> vale 2.</li>
+          <li><code>sourceIndexes.get(2)</code> da la columna real del NIT en el Excel de origen.</li>
+          <li><code>getCell(...)</code> toma esa celda.</li>
+          <li><code>Cells.stringValue</code> la convierte a texto. Si la celda no existe devuelve <code>null</code>; si es un número, lo pasa a texto.</li>
+        </ol></td></tr>
+    <tr><td class="ln">67</td><td class="code">ReportStyles.Pair style =
+    (nit == null || nit.isBlank()) ? subtotal : detail;</td>
+      <td><strong>LA DECISIÓN DEL COLOR.</strong> Es un operador ternario: <code>condición ? siEsVerdad : siEsFalso</code>.<br>Si no hay NIT, el estilo es <code>subtotal</code> (<span class="red">rojo</span>). Si hay NIT, es <code>detail</code> (negro).<br><b>Va a:</b> las líneas 68 y 71. Toda la fila usa este mismo <code>style</code>.</td></tr>
+    <tr><td class="ln">68</td><td class="code">writeDerivedFormulas(targetRow, style.text());</td>
+      <td>Escribe N1, N2 y N3 en las columnas A, B y C, <strong>ya con el color elegido</strong>.<br>Se le pasa <code>style.text()</code> y no <code>number()</code> porque <code>LEFT</code> devuelve texto.<br><b>Va a:</b> la línea 98. <em>Esta es la línea que antes estaba arriba de la 66 y sin estilo.</em></td></tr>
+    <tr><td class="ln">69</td><td class="code">for (int c = 0; c &lt; sourceIndexes.size(); c++)</td>
+      <td>Bucle interno: recorre las 8 columnas que se copian. <code>c</code> va de 0 a 7.</td></tr>
+    <tr><td class="ln">70</td><td class="code">Cell targetCell = targetRow.createCell(c + derivedCount);</td>
+      <td>Crea la celda destino <strong>corrida 3 lugares</strong>: c=0 cae en D, c=1 en E, …, c=7 en K. A, B y C ya las ocupan las fórmulas.</td></tr>
+    <tr><td class="ln">71</td><td class="code">targetCell.setCellStyle(c &lt; FIRST_NUMERIC_POSITION
+    ? style.text() : style.number());</td>
+      <td>Le pone el color. <code>FIRST_NUMERIC_POSITION</code> vale 4: las posiciones 0 a 3 (código, nombre, NIT, razón social) usan el estilo de texto, y de la 4 a la 7 (saldos) el de número con formato <code>#,##0.00</code>.<br><strong>El color es el mismo</strong> porque ambos salen del mismo <code>Pair</code>.</td></tr>
+    <tr><td class="ln">72</td><td class="code">Cell sourceCell = sourceRow.getCell(sourceIndexes.get(c));</td>
+      <td>Busca la celda en el Excel de origen: la columna real que corresponde a la posición <code>c</code>.</td></tr>
+    <tr><td class="ln">73–75</td><td class="code">if (sourceCell != null) {
+    Cells.copyValue(sourceCell, targetCell);
+}</td>
+      <td>Si existe, copia <strong>el valor</strong>, no la fórmula. Si en el origen era una fórmula, copia su resultado.<br><b>Viene de:</b> <code>Cells.java:42</code>.<br>Fijate el orden: primero se pone el estilo y después el valor. En POI el orden da igual, porque el estilo y el valor son cosas independientes de la celda.</td></tr>
+    <tr><td class="ln">78</td><td class="code">setColumnWidths(sheet);</td>
+      <td>Al final, cuando ya están todas las filas, ajusta el ancho de las columnas para que se parezca al reporte de referencia.</td></tr>
+  </table></div>
+
+  <h2 id="formulas">4. <code>writeDerivedFormulas</code> línea por línea</h2>
+  <p>Este es el que pegaste, de <code>MayorSheet.java</code>. Abajo está la diferencia con el de SALDO TERCERO.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Código</th><th>Qué hace / de dónde viene / a dónde va</th></tr>
+    <tr><td class="code">private static void writeDerivedFormulas(
+    Row row, CellStyle style)</td>
+      <td><code>private</code>: solo lo usa esta clase. <code>static</code>: no necesita datos del objeto, todo lo recibe por parámetro.<br><b>Recibe:</b> la fila nueva (<code>targetRow</code>) y el estilo ya decidido (<code>style.text()</code>).</td></tr>
+    <tr><td class="code">int excelRow = row.getRowNum() + 1;</td>
+      <td><strong>Clave:</strong> POI cuenta las filas desde <strong>0</strong> y Excel desde <strong>1</strong>. La fila 4 de POI es la 5 de Excel, por eso se suma 1.</td></tr>
+    <tr><td class="code">String codctaRef = "E" + excelRow;</td>
+      <td>Arma la referencia a la celda del código de cuenta en <strong>esta misma fila</strong>, por ejemplo <code>"E5"</code>. En SALDO TERCERO es <code>"D" + excelRow</code>.</td></tr>
+    <tr><td class="code">String[] formulas = {
+    "LEN(" + codctaRef + ")",
+    "LEFT(" + codctaRef + ",1)",
+    "LEFT(" + codctaRef + ",2)",
+    "LEFT(" + codctaRef + ",4)"};</td>
+      <td>Un arreglo de 4 textos con las fórmulas. Para la fila 5 quedan:
+        <ul>
+          <li><code>LEN(E5)</code>: cuántos caracteres tiene el código. Es LARGO en Excel en español.</li>
+          <li><code>LEFT(E5,1)</code>: el primer dígito, la <strong>clase</strong> (N1). Es IZQUIERDA en español.</li>
+          <li><code>LEFT(E5,2)</code>: los 2 primeros, el <strong>grupo</strong> (N2).</li>
+          <li><code>LEFT(E5,4)</code>: los 4 primeros, la <strong>cuenta</strong> (N3).</li>
+        </ul>
+        Las fórmulas se escriben <strong>en inglés</strong> en el código, porque así las guarda el archivo <code>.xlsx</code>. Excel las traduce al abrirlo.</td></tr>
+    <tr><td class="code">for (int c = 0; c &lt; formulas.length; c++) {</td>
+      <td>Una vuelta por cada fórmula. <code>c</code> es a la vez el índice de la fórmula y el de la columna: 0 = A, 1 = B, 2 = C, 3 = D.</td></tr>
+    <tr><td class="code">    Cell cell = row.createCell(c);</td>
+      <td>Crea la celda en la columna <code>c</code> de la fila nueva.</td></tr>
+    <tr><td class="code">    cell.setCellFormula(formulas[c]);</td>
+      <td>Guarda la <strong>fórmula</strong>, no un resultado. El cálculo lo hace Excel cuando abre el archivo. Por eso se escribe sin el <code>=</code> del principio.</td></tr>
+    <tr><td class="code">    cell.setCellStyle(style);</td>
+      <td><strong>Esta es la línea que faltaba.</strong> Sin ella, las celdas A a D quedaban sin estilo, sin color ni bordes. Ahora toman el mismo estilo que el resto de la fila.</td></tr>
+  </table></div>
+  <h3>La versión de SALDO TERCERO (líneas 98–110)</h3>
+  <pre>private static void writeDerivedFormulas(Row row, CellStyle style) {
+    int excelRow = row.getRowNum() + 1;
+    String codeRef = "D" + excelRow;          // ← D, no E
+    String[] formulas = {
+            "LEFT(" + codeRef + ",1)",        // N1  (antes era LEN)
+            "LEFT(" + codeRef + ",2)",        // N2
+            "LEFT(" + codeRef + ",4)"};       // N3
+    for (int c = 0; c &lt; formulas.length; c++) {
+        Cell cell = row.createCell(c);
+        cell.setCellFormula(formulas[c]);
+        cell.setCellStyle(style);
+    }
+}</pre>
+
+  <h2 id="ejemplo">5. Ejemplo con dos filas</h2>
+  <p>Supongamos que el Excel de origen trae estas dos filas, que van a quedar en las filas 5 y 6 del Excel nuevo:</p>
+  <ul>
+    <li><strong>Fila 5:</strong> Código <code>110505</code>, Nombre "Caja general", NIT <em>vacío</em>, Saldo final 1.500.000.</li>
+    <li><strong>Fila 6:</strong> Código <code>110505</code>, Nombre "Caja general", NIT <code>900123456</code>, Saldo final 1.500.000.</li>
+  </ul>
+  <p>Paso a paso para la fila 5:</p>
+  <ol>
+    <li>Línea 66: <code>nit = null</code>, porque la celda está vacía.</li>
+    <li>Línea 67: <code>nit == null</code> es verdad, así que <code>style = subtotal</code> (<span class="red">rojo</span>).</li>
+    <li>Línea 68: se escriben <code>A5 = LEFT(D5,1)</code>, <code>B5 = LEFT(D5,2)</code> y <code>C5 = LEFT(D5,4)</code>, las tres en rojo.</li>
+    <li>Líneas 69–75: se copian los datos de D5 a K5, también en rojo.</li>
+  </ol>
+  <p>Resultado en Excel:</p>
+  <div class="table-wrap"><table class="sheet">
+    <tr><th></th><th>A · N1</th><th>B · N2</th><th>C · N3</th><th>D · Código</th><th>E · Nombre</th><th>F · NIT</th><th>…</th><th>K · Saldo final</th></tr>
+    <tr class="r"><td>5</td><td>1</td><td>11</td><td>1105</td><td>110505</td><td>Caja general</td><td></td><td>…</td><td>1,500,000.00</td></tr>
+    <tr><td>6</td><td>1</td><td>11</td><td>1105</td><td>110505</td><td>Caja general</td><td>900123456</td><td>…</td><td>1,500,000.00</td></tr>
+  </table></div>
+  <p>La fila 5 queda <span class="red">roja de punta a punta</span>, de A a K. Antes del arreglo, A, B y C quedaban sin color ni bordes.</p>
+
+  <h3>Para practicar</h3>
+  <ol>
+    <li>Si agregaras una columna derivada <code>N4 = LEFT(D,6)</code> en SALDO TERCERO, ¿en qué letra caería el código de cuenta? ¿Qué tendrías que cambiar en <code>codeRef</code>?</li>
+    <li>¿Qué pasaría si borraras <code>+ 1</code> en <code>excelRow</code>?</li>
+    <li>¿Por qué <code>nit.isBlank()</code> va después de <code>nit == null</code> y no antes?</li>
+  </ol>
+</main>
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var root = document.documentElement;
+    try { var saved = localStorage.getItem('theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+    btn.addEventListener('click', function () {
+      var dark = root.getAttribute('data-theme') === 'dark' ||
+        (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var next = dark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>
