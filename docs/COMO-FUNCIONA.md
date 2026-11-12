@@ -18,7 +18,7 @@ flowchart LR
     A[Libro Mayor<br/>43 columnas] --> N[Excel<br/>Normalizer]
     B[Saldo Terceros<br/>17 columnas] --> N
     C[Movimientos<br/>32 columnas] --> N
-    N --> R[Informe final<br/>3 hojas limpias<br/>con formato y fórmulas]
+    N --> R[Informe final<br/>3 hojas limpias + TD<br/>con formato y fórmulas]
 ```
 
 ---
@@ -107,8 +107,30 @@ Es el detalle máximo: un renglón por cada movimiento contable del período.
 | Qué                | Cómo                                                                                                                                                            |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Columnas copiadas  | Las 20 columnas del movimiento (codcta, nomcta, FECHA, DEBITO, CREDITO, NIT, concepto, etc.)                                                                    |
-| Columnas derivadas | N1/N2/N3 adelante, y al final **NETO** `=DEBITO−CREDITO` por fila                                                                                               |
-| Nota               | La tabla dinámica "TD anual" del informe original se alimenta de esta hoja; se decidió NO generarla — el contador refresca la suya apuntándola al archivo nuevo |
+| Columnas derivadas | N1/N2/N3 adelante, y al final **NETO** `=DEBITO−CREDITO` y **Meses** (columna Y) por fila                                                                     |
+| Meses              | El primer día del mes de FECHA, con formato `mmm-yy` (ene-26). La hoja TD lo usa para tener una columna por mes, ordenada por calendario                         |
+| Validación         | Si alguna FECHA no es una fecha real (texto, vacía, `0`, un número tipo `20260531`), la conversión se cancela y el error lista las filas del archivo de origen   |
+| Nota               | La hoja **TD** se alimenta de esta hoja (ver más abajo)                                                                                                         |
+
+### Hoja TD (tabla dinámica sobre AUXILIAR)
+
+Al principio se decidió NO generarla (YAGNI): el contador apuntaba su propia
+tabla dinámica al archivo nuevo. Cuando el cliente pidió que viniera incluida,
+la necesidad dejó de ser una suposición y se construyó. El diseño completo está
+en `docs/designs/td-pivot-sheet.md`.
+
+| Qué        | Cómo                                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------------- |
+| Filas      | N1 → N2 → N3 → nomcta → cNOMNIT, cada una en su columna (diseño tabular), sin subtotales, de menor a mayor     |
+| Columnas   | Meses (ene-26, feb-26...), en orden de calendario, más Total general                                            |
+| Valores    | Suma de NETO                                                                                                    |
+| Cómo nace  | El programa crea la tabla vacía y marcada para actualizarse al abrir; Excel de escritorio la llena al abrir el archivo |
+
+Cosas a saber:
+
+- **Solo Excel de escritorio.** LibreOffice, Google Sheets o la vista previa del correo muestran la TD vacía.
+- **Vista protegida.** Si el archivo llega por correo, la TD se ve vacía hasta pulsar "Habilitar edición". Para evitarlo, abre el archivo una vez y guárdalo antes de enviarlo.
+- **Excel pide guardar al cerrar.** Es normal: al abrir actualizó la tabla.
 
 ---
 
@@ -130,22 +152,24 @@ flowchart TB
         M[MayorSheet]
         T[SaldoTerceroSheet]
         X[AuxiliarSheet]
+        P[TdPivotSheet]
         E[ReportStyles<br/>fábrica de estilos]
         C[Cells<br/>utilidades]
     end
     CLI --> S
     UI --> S
     S --> K
-    S --> M & T & X
+    S --> M & T & X & P
     M & T & X --> E
-    M & T & X --> C
+    M & T & X & P --> C
 ```
 
 | Clase                                                | Responsabilidad (una sola)                                                                                                         |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `NormalizationService`                               | Orquestar: detectar los 3 archivos, invocar los 3 escritores, guardar el resultado. Falla con excepciones, jamás cierra el proceso |
+| `NormalizationService`                               | Orquestar: detectar los 3 archivos, invocar los escritores, calcular las fórmulas, guardar el resultado. Falla con excepciones, jamás cierra el proceso |
 | `SourceKind`                                         | Saber reconocer cada export por sus encabezados                                                                                    |
 | `MayorSheet` / `SaldoTerceroSheet` / `AuxiliarSheet` | Escribir UNA hoja cada una: columnas, fórmulas, estilos                                                                            |
+| `TdPivotSheet`                                       | Crear la tabla dinámica TD sobre AUXILIAR y ajustar su diseño (tabular, orden, formatos)                                           |
 | `ReportStyles`                                       | Crear los estilos de celda (una sola vez, se reutilizan)                                                                           |
 | `Cells`                                              | Ayudantes pequeños: leer encabezados, copiar valores de celda                                                                      |
 | `ExcelNormalizer` (CLI)                              | Traducir argumentos → servicio → mensajes de consola y códigos de salida. Es el ÚNICO lugar con `System.exit`                      |
@@ -233,11 +257,11 @@ que la abstracción equivocada.
 
   `com.excelnormalizer` (no `com.agroyuca`) y la empresa del informe sale del
   propio archivo. La herramienta sirve para cualquier empresa.
-- **YAGNI (You Aren't Gonna Need It)**: no se generó la tabla dinámica (el
-
-  contador refresca la suya), no se separó en módulos Maven (un solo consumidor
-  extra no lo justifica aún), no se creó base de datos ni servidor. Cada "no"
-  fue una decisión, no un olvido.
+- **YAGNI (You Aren't Gonna Need It)**: no se separó en módulos Maven (un solo
+  consumidor extra no lo justifica aún), no se creó base de datos ni servidor.
+  Cada "no" fue una decisión, no un olvido. La tabla dinámica TD también empezó
+  como un "no"; se construyó cuando el cliente la pidió. Eso es YAGNI bien
+  aplicado: se construye cuando la necesidad es real, no cuando se supone.
 - **Verificar contra la realidad**: cada regla (colores por nivel, rojo sin
 
   NIT, fórmulas de control) se comprobó celda por celda contra el informe
@@ -460,6 +484,10 @@ El resto de fórmulas del proyecto son de texto y aritmética simple:
 el contador puede pararse en cualquier celda del informe, ver de dónde sale
 el número y confiar en él. Un valor pegado es una caja negra; una fórmula es
 una explicación.
+
+El archivo se guarda con el resultado de cada fórmula ya calculado (el
+programa las calcula antes de guardar). Así la tabla dinámica TD encuentra
+valores al actualizarse, y las fórmulas siguen vivas para quien las edite.
 
 ---
 
