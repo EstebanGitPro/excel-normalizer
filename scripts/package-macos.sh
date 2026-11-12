@@ -20,7 +20,7 @@ jpackage \
   --app-version 1.0.0 \
   --vendor "Excel Normalizer" \
   --input target \
-  --main-jar excel-normalizer-0.1.0.jar \
+  --main-jar excel-normalizer-0.2.0.jar \
   --main-class com.excelnormalizer.ui.Launcher \
   --java-options "--enable-native-access=ALL-UNNAMED" \
   --icon assets/icon/icon.icns \
