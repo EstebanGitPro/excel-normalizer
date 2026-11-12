@@ -3,6 +3,7 @@ package com.excelnormalizer;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileOutputStream;
@@ -82,6 +83,9 @@ public class NormalizationService {
             new MayorSheet(styles).write(sources.get(SourceKind.LIBRO_MAYOR), target);
             new SaldoTerceroSheet(styles).write(sources.get(SourceKind.SALDO_TERCEROS), target);
             new AuxiliarSheet(styles).write(sources.get(SourceKind.MOVIMIENTOS), target);
+            // Store formula results so the TD pivot and any reader see values, not blanks.
+            XSSFFormulaEvaluator.evaluateAllFormulaCells(target);
+            new TdPivotSheet().write(target);
 
             try (FileOutputStream out = new FileOutputStream(output.toFile())) {
                 target.write(out);
@@ -89,7 +93,7 @@ public class NormalizationService {
             return new Result(output.toAbsolutePath(),
                     target.getSheet("MAYOR").getLastRowNum() + 1,
                     target.getSheet("SALDO TERCERO").getLastRowNum() + 1,
-                    target.getSheet("AUXILIAR").getLastRowNum() + 1);
+                    target.getSheet(AuxiliarSheet.SHEET_NAME).getLastRowNum() + 1);
         } finally {
             for (Workbook workbook : workbooks) {
                 workbook.close();

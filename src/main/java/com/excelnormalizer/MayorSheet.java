@@ -20,7 +20,7 @@ import java.util.Map;
  */
 final class MayorSheet {
 
-    private static final List<String> COLUMNS_TO_KEEP = List.of(
+    static final List<String> COLUMNS_TO_KEEP = List.of(
             "CODCTA", "Tnomcta", "ANTERIOR", "DEBITOS", "CREDITOS", "SALDO_FINAL");
     private static final List<String> DERIVED_COLUMNS = List.of("LARGO", "N1", "N2", "N3");
     private static final int TITLE_ROWS = 4;
