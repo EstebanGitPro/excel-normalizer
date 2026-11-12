@@ -115,10 +115,9 @@ final class MayorSheet {
                 writeHeaderRow(targetRow, headerStyle, derivedHeaderStyle);
                 continue;
             }
-            writeDerivedFormulas(targetRow);
-
             String codcta = Cells.stringValue(sourceRow.getCell(sourceIndexes.get(0)));
             ReportStyles.Pair style = styleForCode(levelStyles, codcta);
+            writeDerivedFormulas(targetRow, style.text());
             for (int c = 0; c < sourceIndexes.size(); c++) {
                 Cell targetCell = targetRow.createCell(c + derivedCount);
                 targetCell.setCellStyle(c < 2 ? style.text() : style.number());
@@ -144,13 +143,19 @@ final class MayorSheet {
     }
 
     /** LARGO, N1, N2, N3 mirror the reference report: LEN/LEFT over the CODCTA cell (column E). */
-    private static void writeDerivedFormulas(Row row) {
+    private static void writeDerivedFormulas(Row row, CellStyle style) {
         int excelRow = row.getRowNum() + 1;
         String codctaRef = "E" + excelRow;
-        row.createCell(0).setCellFormula("LEN(" + codctaRef + ")");
-        row.createCell(1).setCellFormula("LEFT(" + codctaRef + ",1)");
-        row.createCell(2).setCellFormula("LEFT(" + codctaRef + ",2)");
-        row.createCell(3).setCellFormula("LEFT(" + codctaRef + ",4)");
+        String[] formulas = {
+                "LEN(" + codctaRef + ")",
+                "LEFT(" + codctaRef + ",1)",
+                "LEFT(" + codctaRef + ",2)",
+                "LEFT(" + codctaRef + ",4)"};
+        for (int c = 0; c < formulas.length; c++) {
+            Cell cell = row.createCell(c);
+            cell.setCellFormula(formulas[c]);
+            cell.setCellStyle(style);
+        }
     }
 
     /**

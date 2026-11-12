@@ -63,10 +63,9 @@ final class SaldoTerceroSheet {
                 writeHeaderRow(targetRow, headerStyle, derivedHeaderStyle);
                 continue;
             }
-            writeDerivedFormulas(targetRow);
-
             String nit = Cells.stringValue(sourceRow.getCell(sourceIndexes.get(NIT_POSITION)));
             ReportStyles.Pair style = (nit == null || nit.isBlank()) ? subtotal : detail;
+            writeDerivedFormulas(targetRow, style.text());
             for (int c = 0; c < sourceIndexes.size(); c++) {
                 Cell targetCell = targetRow.createCell(c + derivedCount);
                 targetCell.setCellStyle(c < FIRST_NUMERIC_POSITION ? style.text() : style.number());
@@ -93,15 +92,21 @@ final class SaldoTerceroSheet {
     }
 
     /**
-     * Mirrors the reference report: N1 is the code length (LEN), N2 and N3 the
-     * 2- and 4-digit prefixes of the account code (column D).
+     * N1/N2/N3 are the 1-, 2- and 4-digit prefixes of the account code (column D),
+     * styled like the rest of the row.
      */
-    private static void writeDerivedFormulas(Row row) {
+    private static void writeDerivedFormulas(Row row, CellStyle style) {
         int excelRow = row.getRowNum() + 1;
         String codeRef = "D" + excelRow;
-        row.createCell(0).setCellFormula("LEN(" + codeRef + ")");
-        row.createCell(1).setCellFormula("LEFT(" + codeRef + ",2)");
-        row.createCell(2).setCellFormula("LEFT(" + codeRef + ",4)");
+        String[] formulas = {
+                "LEFT(" + codeRef + ",1)",
+                "LEFT(" + codeRef + ",2)",
+                "LEFT(" + codeRef + ",4)"};
+        for (int c = 0; c < formulas.length; c++) {
+            Cell cell = row.createCell(c);
+            cell.setCellFormula(formulas[c]);
+            cell.setCellStyle(style);
+        }
     }
 
     /** Column widths copied from the reference report (Excel width units). */
