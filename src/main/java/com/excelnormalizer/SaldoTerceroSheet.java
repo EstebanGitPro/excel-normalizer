@@ -17,7 +17,7 @@ import java.util.Map;
  */
 final class SaldoTerceroSheet {
 
-    private static final List<String> COLUMNS_TO_KEEP = List.of(
+    static final List<String> COLUMNS_TO_KEEP = List.of(
             "Código Cuenta", "Nombre del Concepto Contable", "NIT_CEDULA",
             "Nombre de la Razon Social", "SALDO_ANTERIOR", "DEBITOS", "CREDITOS", "SALDO_FINAL");
     private static final List<String> DERIVED_COLUMNS = List.of("N1", "N2", "N3");
