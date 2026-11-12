@@ -283,10 +283,62 @@ Detalle importante: el jar incluye los archivos nativos de JavaFX **de la
 plataforma donde se compila**. Por eso el workflow compila TODO en Windows,
 no solo el paso final.
 
+### Pasos concretos para generar el `.msi`
+
+**Opción A — GitHub Actions (recomendada, sin máquina Windows)**
+
+1. Commitear y pushear los cambios a `main`:
+
+   ```sh
+   git add .
+   git commit -m "..."
+   git push origin main
+   ```
+2. Disparar el workflow. Dos formas:
+   - Manual, sin crear un tag (`gh` CLI):
+
+     ```sh
+     gh workflow run package-windows.yml --ref main
+     ```
+   - Automático, creando una versión (dispara igual el workflow):
+
+     ```sh
+     git tag v0.2.0
+     git push origin v0.2.0
+     ```
+3. Seguir el run hasta que termine (~10-25 min):
+
+   ```sh
+   gh run list --workflow=package-windows.yml --limit 1
+   gh run watch <run-id> --exit-status
+   ```
+4. Descargar el `.msi` generado:
+
+   ```sh
+   gh run download <run-id> -n excel-normalizer-windows-installer
+   ```
+
+**Opción B — Máquina Windows local**
+
+Requisitos: JDK 25, Maven, [WiX Toolset v3](https://wixtoolset.org/) en el
+`PATH`.
+
+1. Clonar el repo y pararse en la raíz del proyecto.
+2. Correr:
+
+   ```bat
+   scripts\package-windows.bat
+   ```
+3. El instalador queda en `dist\Excel Normalizer-0.1.0.msi`.
+
 **Advertencia de confianza**: un `.msi` sin firmar dispara el aviso de
-SmartScreen la primera vez ("Windows protegió tu equipo"). Para pocos
-empleados se explica una vez; para cero avisos se necesita un certificado de
-firma de código (decisión y costo del cliente).
+SmartScreen la primera vez ("Windows protegió tu equipo"), y algunos
+antivirus (ej. F-Secure) pueden marcarlo como falso positivo por heurística
+(patrón típico de instaladores que empaquetan un runtime, no por código
+malicioso real) — se soluciona reportando el archivo al vendor o agregando
+una excepción manual. Para pocos empleados alcanza con explicarlo una vez;
+para cero avisos hace falta un certificado de firma de código (decisión y
+costo del cliente).
 
 ---
 
@@ -314,12 +366,12 @@ Cada fila del MAYOR funciona como tu extracto del banco:
 SALDO_FINAL = ANTERIOR + DEBITOS − CREDITOS
 ```
 
-| Columna | Qué es en la historia del frasco |
-| ------- | -------------------------------- |
-| ANTERIOR | Cuánto había en el frasco al empezar el mes |
-| DEBITOS | Todo lo que entró en el mes |
-| CREDITOS | Todo lo que salió en el mes |
-| SALDO_FINAL | Cuánto quedó al final |
+| Columna     | Qué es en la historia del frasco            |
+| ----------- | ------------------------------------------- |
+| ANTERIOR    | Cuánto había en el frasco al empezar el mes |
+| DEBITOS     | Todo lo que entró en el mes                 |
+| CREDITOS    | Todo lo que salió en el mes                 |
+| SALDO_FINAL | Cuánto quedó al final                       |
 
 Esta fórmula no la escribimos nosotros: el sistema contable ya trae los
 valores calculados. Pero es la lógica que le da sentido a las 4 columnas de
@@ -329,16 +381,16 @@ números que copiamos.
 
 El primer dígito del código de cuenta dice qué tipo de frasco es:
 
-| Clase | Nombre | En palabras simples |
-| ----- | ------ | ------------------- |
-| 1 | Activo | Lo que la empresa TIENE (plata, inventario, lo que le deben) |
-| 2 | Pasivo | Lo que la empresa DEBE (proveedores, impuestos, préstamos) |
-| 3 | Patrimonio | Lo que es de los dueños |
-| 4 | Ingresos | Lo que ENTRÓ por vender |
-| 5 | Gastos | Lo que se gastó en funcionar (nómina, servicios) |
-| 6 | Costos de ventas | Lo que costó producir lo vendido |
-| 7 | Costos de producción | Costos de operación de la producción |
-| 8 | Cuentas de orden | Anotaciones de control que no mueven plata real |
+| Clase | Nombre               | En palabras simples                                          |
+| ----- | -------------------- | ------------------------------------------------------------ |
+| 1     | Activo               | Lo que la empresa TIENE (plata, inventario, lo que le deben) |
+| 2     | Pasivo               | Lo que la empresa DEBE (proveedores, impuestos, préstamos)   |
+| 3     | Patrimonio           | Lo que es de los dueños                                      |
+| 4     | Ingresos             | Lo que ENTRÓ por vender                                      |
+| 5     | Gastos               | Lo que se gastó en funcionar (nómina, servicios)             |
+| 6     | Costos de ventas     | Lo que costó producir lo vendido                             |
+| 7     | Costos de producción | Costos de operación de la producción                         |
+| 8     | Cuentas de orden     | Anotaciones de control que no mueven plata real              |
 
 ### Idea 4 — La contabilidad siempre debe cuadrar
 
@@ -389,20 +441,20 @@ mismo por ambos lados, la suma de todos los débitos del libro debe ser igual
 a la suma de todos los créditos. La resta debe dar cero, siempre.
 
 > Estas dos últimas fórmulas son **alarmas, no información**: cuando dan 0
-> nadie las mira; el día que no den 0, le avisan al contador que hay un error
+>
 > ANTES de enviar el informe.
 
 ### Las fórmulas que NO son de contabilidad
 
 El resto de fórmulas del proyecto son de texto y aritmética simple:
 
-| Fórmula | Dónde | Qué genera y para qué |
-| ------- | ----- | --------------------- |
-| `=LEN(E6)` | LARGO / N1 (Saldo Tercero) | Cuenta los dígitos del código → dice el NIVEL del árbol (1 = clase, 6 = subcuenta). Sirve para filtrar: "muéstrame solo las clases" |
-| `=LEFT(E6,1)` | N1 | El primer dígito → a qué clase pertenece la fila (1 Activo, 2 Pasivo...) |
-| `=LEFT(E6,2)` | N2 | Los primeros 2 dígitos → el grupo (11 Disponible) |
-| `=LEFT(E6,4)` | N3 | Los primeros 4 dígitos → la cuenta (1105 Caja) |
-| `=I2-J2` | NETO (Auxiliar) | Débito menos crédito de UN movimiento → cuánto aportó ese renglón, en un solo número con signo. Es la columna que la tabla dinámica del contador suma por mes |
+| Fórmula       | Dónde                      | Qué genera y para qué                                                                                                                                         |
+| ------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `=LEN(E6)`    | LARGO / N1 (Saldo Tercero) | Cuenta los dígitos del código → dice el NIVEL del árbol (1 = clase, 6 = subcuenta). Sirve para filtrar: "muéstrame solo las clases"                           |
+| `=LEFT(E6,1)` | N1                         | El primer dígito → a qué clase pertenece la fila (1 Activo, 2 Pasivo...)                                                                                      |
+| `=LEFT(E6,2)` | N2                         | Los primeros 2 dígitos → el grupo (11 Disponible)                                                                                                             |
+| `=LEFT(E6,4)` | N3                         | Los primeros 4 dígitos → la cuenta (1105 Caja)                                                                                                                |
+| `=I2-J2`      | NETO (Auxiliar)            | Débito menos crédito de UN movimiento → cuánto aportó ese renglón, en un solo número con signo. Es la columna que la tabla dinámica del contador suma por mes |
 
 ¿Por qué se generan como fórmulas vivas y no como valores pegados? Porque así
 el contador puede pararse en cualquier celda del informe, ver de dónde sale
