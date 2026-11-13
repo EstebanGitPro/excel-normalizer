@@ -47,10 +47,10 @@ final class SaldoTerceroSheet {
         int derivedCount = DERIVED_COLUMNS.size();
 
         Sheet sheet = workbook.createSheet("SALDO TERCERO");
-        CellStyle headerStyle = styles.header(true);
-        CellStyle derivedHeaderStyle = styles.plainHeader(true);
-        ReportStyles.Pair subtotal = styles.red(ReportStyles.DECIMAL_FORMAT);
-        ReportStyles.Pair detail = styles.plain(ReportStyles.DECIMAL_FORMAT);
+        sheet.createFreezePane(0, 1);
+        CellStyle headerStyle = styles.header();
+        ReportStyles.Pair subtotal = styles.red(ReportStyles.INTEGER_FORMAT);
+        ReportStyles.Pair detail = styles.plain(ReportStyles.INTEGER_FORMAT);
 
         int targetRowNum = 0;
         for (int r = sourceSheet.getFirstRowNum(); r <= sourceSheet.getLastRowNum(); r++) {
@@ -60,7 +60,7 @@ final class SaldoTerceroSheet {
             }
             Row targetRow = sheet.createRow(targetRowNum++);
             if (r == sourceSheet.getFirstRowNum()) {
-                writeHeaderRow(targetRow, headerStyle, derivedHeaderStyle);
+                writeHeaderRow(targetRow, headerStyle);
                 continue;
             }
             String nit = Cells.stringValue(sourceRow.getCell(sourceIndexes.get(NIT_POSITION)));
@@ -78,11 +78,11 @@ final class SaldoTerceroSheet {
         setColumnWidths(sheet);
     }
 
-    private void writeHeaderRow(Row row, CellStyle headerStyle, CellStyle derivedHeaderStyle) {
+    private void writeHeaderRow(Row row, CellStyle headerStyle) {
         for (int c = 0; c < DERIVED_COLUMNS.size(); c++) {
             Cell cell = row.createCell(c);
             cell.setCellValue(DERIVED_COLUMNS.get(c));
-            cell.setCellStyle(derivedHeaderStyle);
+            cell.setCellStyle(headerStyle);
         }
         for (int c = 0; c < COLUMNS_TO_KEEP.size(); c++) {
             Cell cell = row.createCell(c + DERIVED_COLUMNS.size());
