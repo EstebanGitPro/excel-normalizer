@@ -11,10 +11,10 @@ call mvn -q clean package -DskipTests || exit /b 1
 jpackage ^
   --type msi ^
   --name "Excel Normalizer" ^
-  --app-version 0.2.0 ^
+  --app-version 0.3.0 ^
   --vendor "Excel Normalizer" ^
   --input target ^
-  --main-jar excel-normalizer-0.2.0.jar ^
+  --main-jar excel-normalizer-0.3.0.jar ^
   --main-class com.excelnormalizer.ui.Launcher ^
   --java-options "--enable-native-access=ALL-UNNAMED" ^
   --icon assets\icon\icon.ico ^
@@ -23,4 +23,4 @@ jpackage ^
   --win-per-user-install ^
   --dest dist
 
-echo Done: dist\Excel Normalizer-0.2.0.msi
+echo Done: dist\Excel Normalizer-0.3.0.msi
