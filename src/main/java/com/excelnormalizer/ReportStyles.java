@@ -1,11 +1,6 @@
 package com.excelnormalizer;
 
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,8 +12,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 final class ReportStyles {
 
     static final String INTEGER_FORMAT = "#,##0;[Red]\\(#,##0\\)";
-    static final String DECIMAL_FORMAT = "#,##0.00";
-    private static final byte[] BLUE_ACCOUNT = {(byte) 0x00, (byte) 0x70, (byte) 0xC0};
+    private static final byte[] BLUE_ACCOUNT = {(byte) 0x00, (byte) 0x00, (byte) 0xFF};
 
     /** Styles for one row kind: text cells and numeric cells. */
     record Pair(CellStyle text, CellStyle number) {}
@@ -31,7 +25,7 @@ final class ReportStyles {
 
     /** Merged title rows: bold 12pt centered, matching the reference report banner. */
     CellStyle title() {
-        CellStyle style = workbook.createCellStyle();
+        CellStyle style = newStyle();
         Font font = workbook.createFont();
         font.setFontName("Albertus Extra Bold");
         font.setFontHeightInPoints((short) 12);
@@ -41,25 +35,19 @@ final class ReportStyles {
         return style;
     }
 
-    /** Grey column header (fill indexed 22, thin borders, Arial 10). */
-    CellStyle header(boolean bold) {
-        return header(bold, true);
-    }
-
-    CellStyle header(boolean bold, boolean borders) {
-        CellStyle style = workbook.createCellStyle();
+    /** Column header shared by every sheet: bold Arial 10 on grey, medium borders. */
+    CellStyle header() {
+        CellStyle style = newStyle();
         style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        if (borders) {
-            thinBorders(style);
-        }
-        style.setFont(arial(10, bold, null));
+        borders(style, BorderStyle.MEDIUM);
+        style.setFont(arial(10, true, null));
         return style;
     }
 
     /** Free-form data cell style; numberFormat and fontName may be null for defaults. */
     CellStyle custom(String fontName, int points, String numberFormat, boolean borders) {
-        CellStyle style = workbook.createCellStyle();
+        CellStyle style = newStyle();
         XSSFFont font = workbook.createFont();
         font.setFontName(fontName == null ? "Arial" : fontName);
         font.setFontHeightInPoints((short) points);
@@ -70,13 +58,6 @@ final class ReportStyles {
         if (numberFormat != null) {
             style.setDataFormat(workbook.createDataFormat().getFormat(numberFormat));
         }
-        return style;
-    }
-
-    /** Header cells outside the grey band (derived columns): plain Arial 10. */
-    CellStyle plainHeader(boolean bold) {
-        CellStyle style = workbook.createCellStyle();
-        style.setFont(arial(10, bold, null));
         return style;
     }
 
@@ -103,19 +84,19 @@ final class ReportStyles {
     /** Control rows at the bottom of MAYOR: Arial 10, no borders. */
     Pair control() {
         XSSFFont font = arial(10, false, null);
-        CellStyle text = workbook.createCellStyle();
+        CellStyle text = newStyle();
         text.setFont(font);
-        CellStyle number = workbook.createCellStyle();
+        CellStyle number = newStyle();
         number.setFont(font);
         number.setDataFormat(workbook.createDataFormat().getFormat(INTEGER_FORMAT));
         return new Pair(text, number);
     }
 
     private Pair pair(Font font, String numberFormat) {
-        CellStyle text = workbook.createCellStyle();
+        CellStyle text = newStyle();
         text.setFont(font);
         thinBorders(text);
-        CellStyle number = workbook.createCellStyle();
+        CellStyle number = newStyle();
         number.setFont(font);
         thinBorders(number);
         number.setDataFormat(workbook.createDataFormat().getFormat(numberFormat));
@@ -134,9 +115,25 @@ final class ReportStyles {
     }
 
     private static void thinBorders(CellStyle style) {
-        style.setBorderTop(BorderStyle.THIN);
-        style.setBorderBottom(BorderStyle.THIN);
-        style.setBorderLeft(BorderStyle.THIN);
-        style.setBorderRight(BorderStyle.THIN);
+        borders(style, BorderStyle.THIN);
+    }
+
+    private static void borders(CellStyle style, BorderStyle border) {
+        style.setBorderTop(border);
+        style.setBorderBottom(border);
+        style.setBorderLeft(border);
+        style.setBorderRight(border);
+    }
+
+    /** Every report cell is centered, so every style starts from here. */
+    private CellStyle newStyle() {
+        CellStyle style = workbook.createCellStyle();
+        centered(style);
+        return style;
+    }
+
+    private static void centered(CellStyle style) {
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
     }
 }

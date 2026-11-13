@@ -85,9 +85,8 @@ final class AuxiliarSheet {
         int dateSourceIndex = headerIndex.get(DATE_COLUMN);
 
         Sheet sheet = workbook.createSheet(SHEET_NAME);
-        CellStyle headerStyle = styles.header(false);
-        CellStyle headerNoBorder = styles.header(false, false);
-        CellStyle derivedHeaderStyle = styles.plainHeader(false);
+        sheet.createFreezePane(0, 1);
+        CellStyle headerStyle = styles.header();
 
         List<Integer> invalidDateRows = new ArrayList<>();
         int targetRowNum = 0;
@@ -98,8 +97,7 @@ final class AuxiliarSheet {
             }
             Row targetRow = sheet.createRow(targetRowNum++);
             if (r == sourceSheet.getFirstRowNum()) {
-                writeHeaderRow(targetRow, headerStyle, headerNoBorder, derivedHeaderStyle,
-                        netoIndex, monthIndex);
+                writeHeaderRow(targetRow, headerStyle, netoIndex, monthIndex);
                 continue;
             }
             writeDerivedFormulas(targetRow, derivedStyle);
@@ -168,12 +166,11 @@ final class AuxiliarSheet {
         return "FECHA is not a valid date in Movimiento Contabilidad file, rows: " + listed + more;
     }
 
-    private void writeHeaderRow(Row row, CellStyle headerStyle, CellStyle headerNoBorder,
-                                CellStyle derivedHeaderStyle, int netoIndex, int monthIndex) {
+    private void writeHeaderRow(Row row, CellStyle headerStyle, int netoIndex, int monthIndex) {
         for (int c = 0; c < DERIVED_COLUMNS.size(); c++) {
             Cell cell = row.createCell(c);
             cell.setCellValue(DERIVED_COLUMNS.get(c));
-            cell.setCellStyle(derivedHeaderStyle);
+            cell.setCellStyle(headerStyle);
         }
         for (int c = 0; c < COLUMNS_TO_KEEP.size(); c++) {
             Cell cell = row.createCell(c + DERIVED_COLUMNS.size());
@@ -183,11 +180,11 @@ final class AuxiliarSheet {
 
         Cell neto = row.createCell(netoIndex);
         neto.setCellValue(NETO_COLUMN);
-        neto.setCellStyle(headerNoBorder);
+        neto.setCellStyle(headerStyle);
 
         Cell month = row.createCell(monthIndex);
         month.setCellValue(MONTH_COLUMN);
-        month.setCellStyle(headerNoBorder);
+        month.setCellStyle(headerStyle);
     }
 
     /** N1/N2/N3 mirror the reference report: 1-, 2- and 4-digit prefixes of codcta (column D). */

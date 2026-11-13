@@ -48,6 +48,7 @@ final class MayorSheet {
         }
 
         Sheet sheet = workbook.createSheet("MAYOR");
+        sheet.createFreezePane(0, TITLE_ROWS + 1);
         writeTitleRows(sheet, sourceSheet, headerIndex);
         writeData(sheet, sourceSheet, headerIndex);
         writeControlRows(sheet);
@@ -100,8 +101,7 @@ final class MayorSheet {
         }
         int derivedCount = DERIVED_COLUMNS.size();
 
-        CellStyle headerStyle = styles.header(false);
-        CellStyle derivedHeaderStyle = styles.plainHeader(false);
+        CellStyle headerStyle = styles.header();
         Map<Integer, ReportStyles.Pair> levelStyles = buildLevelStyles();
 
         int targetRowNum = TITLE_ROWS;
@@ -112,7 +112,7 @@ final class MayorSheet {
             }
             Row targetRow = sheet.createRow(targetRowNum++);
             if (r == sourceSheet.getFirstRowNum()) {
-                writeHeaderRow(targetRow, headerStyle, derivedHeaderStyle);
+                writeHeaderRow(targetRow, headerStyle);
                 continue;
             }
             String codcta = Cells.stringValue(sourceRow.getCell(sourceIndexes.get(0)));
@@ -129,11 +129,11 @@ final class MayorSheet {
         }
     }
 
-    private void writeHeaderRow(Row row, CellStyle headerStyle, CellStyle derivedHeaderStyle) {
+    private void writeHeaderRow(Row row, CellStyle headerStyle) {
         for (int c = 0; c < DERIVED_COLUMNS.size(); c++) {
             Cell cell = row.createCell(c);
             cell.setCellValue(DERIVED_COLUMNS.get(c));
-            cell.setCellStyle(derivedHeaderStyle);
+            cell.setCellStyle(headerStyle);
         }
         for (int c = 0; c < COLUMNS_TO_KEEP.size(); c++) {
             Cell cell = row.createCell(c + DERIVED_COLUMNS.size());
