@@ -35,7 +35,6 @@ jobs:
           --icon assets/icon/icon.ico
           --win-menu
           --win-shortcut
-          --win-per-user-install
           --dest dist
 
       - uses: actions/upload-artifact@v4
