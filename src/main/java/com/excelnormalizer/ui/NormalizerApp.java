@@ -46,6 +46,10 @@ public class NormalizerApp extends Application {
 
         Label heading = new Label("Normalizador de Informes Contables");
         heading.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        Label versionLabel = new Label("v" + appVersion());
+        versionLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        HBox headingRow = new HBox(8, heading, versionLabel);
+        headingRow.setAlignment(Pos.BASELINE_LEFT);
         Label subtitle = new Label(
                 "Cargue los tres archivos exportados del sistema contable, en cualquier orden.");
 
@@ -72,12 +76,12 @@ public class NormalizerApp extends Application {
         HBox actionRow = new HBox(12, convertButton, progress);
         actionRow.setAlignment(Pos.CENTER_LEFT);
 
-        VBox root = new VBox(14, heading, subtitle, slotsBox, actionRow, resultRow);
+        VBox root = new VBox(14, headingRow, subtitle, slotsBox, actionRow, resultRow);
         root.setPadding(new Insets(20));
 
         Scene scene = new Scene(root, 680, 360);
         enableWindowDrop(scene);
-        stage.setTitle("Excel Normalizer");
+        stage.setTitle("Excel Normalizer v" + appVersion());
         stage.setScene(scene);
         stage.show();
     }
@@ -207,6 +211,15 @@ public class NormalizerApp extends Application {
             resultLabel.setStyle("-fx-text-fill: #c0392b;");
         });
         Thread.ofVirtual().start(task);
+    }
+
+    /**
+     * Version from the jar manifest (written by the shade plugin from pom.xml).
+     * Returns "dev" when running from classes, e.g. via mvn javafx:run.
+     */
+    private static String appVersion() {
+        String version = NormalizerApp.class.getPackage().getImplementationVersion();
+        return version == null ? "dev" : version;
     }
 
     private static String friendlyMessage(Throwable error) {
