@@ -20,7 +20,6 @@ jpackage ^
   --icon assets\icon\icon.ico ^
   --win-menu ^
   --win-shortcut ^
-  --win-per-user-install ^
   --dest dist
 
 echo Done: dist\Excel Normalizer-0.3.0.msi
